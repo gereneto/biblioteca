@@ -1,6 +1,6 @@
 /* Dom Casmurro — Machado de Assis
-   Texto estabelecido para esta biblioteca: 1ª edição (H. Garnier, 1899) confrontada com o fac-símile
-   e com a tradição posterior; ortografia atualizada (Acordo de 1990). Ver a página "Sobre esta edição".
+   Gerado por ferramentas/texto.py a partir de edicoes/dom-casmurro/. Não edite à mão:
+   corrija as decisões em edicoes/dom-casmurro/ e rode de novo com --publicar.
 
    Formato do texto de cada parte:
      - parágrafos separados por uma linha em branco;
@@ -8,13 +8,13 @@
      - linhas começadas por "| " formam um bloco de versos (ou inscrição), uma linha por verso.
 */
 BIBLIOTECA.obra({
-  id: 'dom-casmurro',
-  autor: 'machado-de-assis',
-  titulo: 'Dom Casmurro',
+  id: "dom-casmurro",
+  autor: "machado-de-assis",
+  titulo: "Dom Casmurro",
   ano: 1899,
-  genero: 'Romance',
-  divisao: { singular: 'capítulo', plural: 'capítulos' },
-  descricao: 'Romance publicado em 1899, reconhecido por muitos como a obra-prima de Machado de Assis.',
+  genero: "Romance",
+  divisao: {"singular": "capítulo", "plural": "capítulos"},
+  descricao: "Romance publicado em 1899, reconhecido por muitos como a obra-prima de Machado de Assis.",
   edicao: {
     apresentacao: `**Texto-base.** Este texto reproduz a primeira edição de _Dom Casmurro_ (Rio de Janeiro e Paris, H. Garnier, 1899; impressa em Paris no fim de 1899 e posta à venda em janeiro de 1900). Foi estabelecido palavra por palavra a partir de três transcrições independentes dessa edição — a do Projeto Gutenberg, feita sobre as imagens da Biblioteca Nacional, a do Wikisource e a de Jorge Stolfi (Unicamp), estas duas sobre o exemplar digitalizado pela Brasiliana USP. Onde elas discordavam, valeu o fac-símile.
 

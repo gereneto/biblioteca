@@ -16,7 +16,10 @@ index.html                              página única; lista os arquivos de con
 css/estilo.css                          toda a aparência
 js/app.js                               roteador e renderização
 conteudo/autores.js                     cadastro dos autores
-conteudo/<autor>/<obra>.js              uma obra por arquivo
+conteudo/<autor>/<obra>.js              uma obra por arquivo (gerado pelas ferramentas)
+edicoes/<obra>/                         fontes e decisões editoriais de cada obra
+ferramentas/                            estabelecimento dos textos (Python)
+PLANO.md                                bibliografia de Machado de Assis e andamento
 netlify.toml                            configuração de publicação (opcional)
 ```
 
@@ -57,6 +60,10 @@ BIBLIOTECA.autor({
 ```
 
 ## Acrescentar uma obra
+
+As obras desta biblioteca são geradas por `ferramentas/texto.py` a partir das decisões
+registradas em `edicoes/<obra>/` (ver `ferramentas/README.md`). Para um texto que não passe
+por esse processo, também dá para escrever o arquivo à mão:
 
 1. Crie `conteudo/<autor>/<obra>.js`:
 
