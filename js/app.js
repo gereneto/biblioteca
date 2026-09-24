@@ -195,7 +195,7 @@
       html += '<a class="cartao" href="#/o/' + o.id + '">' +
         '<span class="cartao-titulo"><em>' + esc(o.titulo) + '</em></span>' +
         '<span class="cartao-meta">' + esc([o.genero, o.ano].filter(Boolean).join(' · ')) + ' · ' + plural(o.partes.length, d.singular, d.plural) + '</span>' +
-        (o.resumo ? '<span class="cartao-texto">' + inline(o.resumo) + '</span>' : '') +
+        (o.descricao ? '<span class="cartao-texto">' + inline(o.descricao) + '</span>' : '') +
         '</a>';
     });
     html += '</div>';
@@ -216,7 +216,7 @@
       '<p class="rosto-autor">' + esc(a.nome) + '</p>' +
       '<h1>' + esc(o.titulo) + '</h1>' +
       '<p class="meta">' + esc([o.genero, o.ano].filter(Boolean).join(' · ')) + '</p>' +
-      (o.resumo ? '<p class="resumo">' + inline(o.resumo) + '</p>' : '') +
+      (o.descricao ? '<p class="descricao">' + inline(o.descricao) + '</p>' : '') +
       '<p class="acoes">' +
       '<a class="botao" href="#/o/' + o.id + '/' + (pos || 1) + '">' + (pos && pos > 1 ? 'Continuar: ' + esc(rotuloParte(o, o.partes[pos - 1])) : 'Começar a ler') + '</a>' +
       (o.edicao ? ' <a class="botao secundario" href="#/o/' + o.id + '/sobre">Sobre esta edição</a>' : '') +

@@ -14,7 +14,7 @@ BIBLIOTECA.obra({
   ano: 1899,
   genero: 'Romance',
   divisao: { singular: 'capítulo', plural: 'capítulos' },
-  resumo: 'Bento Santiago, o Dom Casmurro, reconstrói na velhice a casa da infância e tenta atar as duas pontas da vida: o amor por Capitu, a amizade de Escobar e a dúvida que o consumiu.',
+  descricao: 'Romance publicado em 1899, reconhecido por muitos como a obra-prima de Machado de Assis.',
   edicao: {
     apresentacao: `**Texto-base.** Este texto reproduz a primeira edição de _Dom Casmurro_ (Rio de Janeiro e Paris, H. Garnier, 1899; impressa em Paris no fim de 1899 e posta à venda em janeiro de 1900). Foi estabelecido palavra por palavra a partir de três transcrições independentes dessa edição — a do Projeto Gutenberg, feita sobre as imagens da Biblioteca Nacional, a do Wikisource e a de Jorge Stolfi (Unicamp), estas duas sobre o exemplar digitalizado pela Brasiliana USP. Onde elas discordavam, valeu o fac-símile.
 

@@ -161,7 +161,7 @@ main { padding: 0 1rem 5rem; }
 .rosto { text-align: center; padding: clamp(2.5rem, 8vh, 4.5rem) 0 1rem; }
 .rosto-autor { font-family: var(--sans); font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; color: var(--tinta-tenue); margin: 0 0 .6rem; }
 .rosto h1 { font-weight: 400; font-size: clamp(2.3rem, 8vw, 3.2rem); margin: 0 0 .3rem; line-height: 1.1; }
-.resumo { color: var(--tinta-suave); margin: 1.4rem auto 0; max-width: 30rem; }
+.descricao { color: var(--tinta-suave); margin: 1.4rem auto 0; max-width: 30rem; }
 .acoes { margin: 1.8rem 0 0; display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; }
 .botao {
   display: inline-block; font-family: var(--sans); font-size: .88rem; text-decoration: none;

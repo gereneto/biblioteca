@@ -68,7 +68,7 @@ BIBLIOTECA.obra({
   ano: 1878,
   genero: 'Romance',
   divisao: { singular: 'capítulo', plural: 'capítulos' },
-  resumo: 'Uma ou duas frases (opcional).',
+  descricao: 'Uma frase sobre o livro, não sobre o enredo (opcional).',
   edicao: { apresentacao: `Notas sobre o texto (opcional).` },
   partes: [
     { n: 'I', titulo: '', texto: `Primeiro parágrafo.
