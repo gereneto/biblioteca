@@ -18,22 +18,42 @@ def localizar(E, busca):
 
 
 def parte_em(E, i):
-    n = None
-    for t in E[:i]:
-        if t.startswith('#'):
-            n = t[1:]
-    return n
+    """Rótulo da parte em que está o token i: o número, ou o título se a parte não tem número."""
+    k = max((j for j in range(i) if E[j].startswith('#')), default=None)
+    if k is None:
+        return None
+    if E[k][1:]:
+        return E[k][1:]
+    titulo = []
+    for t in E[k + 2:]:                   # '#', '¶', título..., '¶'
+        if t == '¶':
+            break
+        titulo.append(t)
+    return ' '.join(titulo)
 
 
 def aplicar_emendas(E, italico, emendas):
-    """emendas: [(tipo, busca, troca)] na grafia do texto-base. Devolve (E, italico, registro)."""
+    """emendas: [(tipo, busca, troca)] na grafia do texto-base. Devolve (E, italico, registro).
+    Em trechos longos, a busca pode ser 'começo […] fim' (do começo, único, ao primeiro fim)."""
     reg = []
     for tipo, busca, troca in emendas:
-        b, t = _toks(busca), _toks(troca)
-        achados = localizar(E, b)
-        if len(achados) != 1:
-            raise SystemExit(f'emenda {busca!r}: {len(achados)} ocorrências no texto-base')
-        i = achados[0]
+        t = _toks(troca)
+        if '[…]' in busca:
+            ini, fim = (_toks(x) for x in busca.split('[…]'))
+            achados = localizar(E, ini)
+            if len(achados) != 1:
+                raise SystemExit(f'emenda {busca!r}: começo com {len(achados)} ocorrências no texto-base')
+            i = achados[0]
+            fins = [k for k in localizar(E[i:], fim)]
+            if not fins:
+                raise SystemExit(f'emenda {busca!r}: fim não encontrado')
+            b = E[i:i + fins[0] + len(fim)]
+        else:
+            b = _toks(busca)
+            achados = localizar(E, b)
+            if len(achados) != 1:
+                raise SystemExit(f'emenda {busca!r}: {len(achados)} ocorrências no texto-base')
+            i = achados[0]
         reg.append({'tipo': tipo, 'parte': parte_em(E, i), 'de': busca, 'para': troca})
         E = E[:i] + t + E[i + len(b):]
         italico = italico[:i] + [italico[i]] * len(t) + italico[i + len(b):]
@@ -43,6 +63,8 @@ def aplicar_emendas(E, italico, emendas):
 def _emparelhar(velhos, novos):
     """Emparelha um bloco 'replace' de tamanhos diferentes (junções e separações de palavras)."""
     n, m = len(velhos), len(novos)
+    if n * m > 3000:           # bloco grande demais (texto que não se corresponde): não emparelha
+        return [(list(range(n)), [])] if n else []
     NEG = -10 ** 9
     melhor = [[NEG] * (m + 1) for _ in range(n + 1)]
     volta = [[None] * (m + 1) for _ in range(n + 1)]

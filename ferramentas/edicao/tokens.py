@@ -6,16 +6,17 @@ Formato intermediário de uma obra (saída dos leitores de fontes):
   - itálico entre sublinhados: _assim_.
 
 Fluxo de tokens: '¶' separa parágrafos, '#<n>' marca o início de uma parte,
-'/' separa linhas de verso, '_' abre/fecha itálico.
+'/' separa linhas de verso, '_' abre/fecha itálico, LACUNA marca trecho ausente.
 """
 import bisect
 import re
 from collections import Counter
 from difflib import SequenceMatcher
 
-TOK = re.compile(r"\.{2,}|[^\W_]+(?:['’\-~][^\W_]+)*|[—–]|_|[^\w\s]", re.U)
+TOK = re.compile(r"\.{2,}|\*{3}|[^\W_]+(?:['’\-~][^\W_]+)*|[—–]|_|[^\w\s]", re.U)
 PALAVRA = re.compile(r"^[^\W_]")
 VERSO = '\u0003'
+LACUNA = '\u0005'        # trecho que falta num testemunho (páginas não revisadas etc.): ele não vota ali
 
 
 def e_palavra(t):
@@ -136,14 +137,25 @@ def _mapeador(ops):
                         c.append(j1)
                     if b == i2:
                         c.append(j2)
+                    if i1 < b < i2:          # fronteira no meio de um trecho divergente: pega o trecho todo
+                        c.append(j1 if baixo else j2)
         return min(c) if baixo else max(c)
     return m
 
 
-def divergencias(base, opss):
-    """Pontos em que algum testemunho diverge da base.
+def mapear(ops, s, e):
+    """Trecho do testemunho correspondente ao trecho [s, e) da base."""
+    mp = _mapeador(ops)
+    return mp(s, True), mp(e, False)
+
+
+def divergencias(base, opss, lacunas=None):
+    """Pontos em que algum testemunho diverge da base. lacunas: por testemunho, trechos da base
+    [(i1, i2)] em que ele não tem texto; ali suas diferenças não contam.
     Devolve [(s, e, [(j1, j2) por testemunho])] em fronteiras da base."""
-    iv = sorted([i1, i2] for ops in opss for t, i1, i2, j1, j2 in ops if t != 'equal')
+    lacunas = lacunas or [()] * len(opss)
+    iv = sorted([i1, i2] for ops, zs in zip(opss, lacunas) for t, i1, i2, j1, j2 in ops
+                if t != 'equal' and not any(a <= i1 and i2 <= b for a, b in zs))
     unidos = []
     for a, b in iv:
         if unidos and a <= unidos[-1][1]:

@@ -21,9 +21,18 @@ As fontes baixadas e os relatórios ficam em `ferramentas/cache/<obra>/` (fora d
    maioria (ou quando a maioria vem do mesmo OCR), vale a leitura apoiada pelas edições
    modernas. O relatório `sitios.tsv` lista as escolhas fracas, para conferir no
    fac-símile (`edicao/fac_simile.py`).
+   - **Lacunas**: um testemunho pode faltar em trechos (páginas não revisadas do
+     Wikisource: `wikisource(..., qualidade_minima=3)`); ali ele não vota.
+   - **Edição-base só em OCR** (`RUIDOSO` no config; ex.: _Brás Cubas_, base 1896 com
+     transcrições de 1881): quando nenhuma leitura tem apoio moderno e o OCR aponta para
+     a das modernas, vale esta; e uma segunda passada (`revisar_pelo_ruidoso`) compara o
+     texto com a moderna principal e adota as passagens que o OCR confirma (capítulos
+     reescritos, cortes). Tudo vai para `revisoes.tsv`.
 3. **Intervenções** (`edicoes/<obra>/decisoes.py`, `EMENDAS`): erros tipográficos da
-   edição-base (`erro`), lições da tradição posterior (`edicao`) e erros das
-   transcrições (`ocr`). Tudo na grafia da edição-base.
+   edição-base (`erro`), lições da tradição posterior (`edicao`), erros das
+   transcrições (`ocr`) e lições da edição-base conferidas no fac-símile que o confronto
+   perdeu (`revisao`). Tudo na grafia do texto-base; trechos longos como
+   `'começo […] fim'`.
 4. **Grafia** (`edicao/modernizar.py`): cada palavra recebe a grafia da edição de
    referência (o machadodeassis.net já segue o Acordo de 1990; o Aguilar é convertido),
    só quando é a mesma palavra. Formas do autor que a língua ainda registra (_cousa_,
@@ -43,3 +52,5 @@ As fontes baixadas e os relatórios ficam em `ferramentas/cache/<obra>/` (fora d
 Copie `edicoes/dom-casmurro/` para `edicoes/<obra>/`, ajuste `config.py` (metadados e
 fontes), rode o confronto, leia os relatórios e registre as decisões em `decisoes.py`
 e `notas.py`. Repita até os relatórios só mostrarem escolhas conscientes; então publique.
+Em `notas.py`, `BASE` e `SECOES` trocam os rótulos das tabelas da página «Sobre esta
+edição» quando a edição-base não é a primeira (ver _Brás Cubas_).

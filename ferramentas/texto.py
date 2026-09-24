@@ -51,11 +51,18 @@ def processar(obra, publicar=False):
     pasta = cache(obra, 'relatorios')
 
     # 1. texto-base
-    E0, sitios = estabelecer.estabelecer(tr, config.BASE, md, getattr(config, 'CORRELACIONADOS', ()))
+    E0, sitios = estabelecer.estabelecer(tr, config.BASE, md, getattr(config, 'CORRELACIONADOS', ()),
+                                         getattr(config, 'RUIDOSO', None))
     print('divergências entre transcrições:', len(sitios), dict(estabelecer.resumo(sitios)))
+    ruidoso = getattr(config, 'RUIDOSO', None)
+    revisoes = []
+    if ruidoso:
+        E0, revisoes = estabelecer.revisar_pelo_ruidoso(E0, tr[ruidoso], md[config.REFERENCIAS[0][0]])
+        print(f'leituras da moderna confirmadas pelo {ruidoso}:', len(revisoes))
 
-    # 2. itálico
-    E, ital = modernizar.italico_por_votacao(E0, tr, md.get(config.REFERENCIAS[0][0]))
+    # 2. itálico (o testemunho ruidoso não vota: o OCR não traz itálico)
+    E, ital = modernizar.italico_por_votacao(E0, {n: o for n, o in tr.items() if n != ruidoso},
+                                             md.get(config.REFERENCIAS[0][0]))
 
     # 3. intervenções no texto-base
     E, ital, reg_em = modernizar.aplicar_emendas(E, ital, dec.EMENDAS)
@@ -75,6 +82,7 @@ def processar(obra, publicar=False):
     # relatórios
     n = {
         'sitios': relatorios.sitios(pasta, sitios),
+        'revisoes': relatorios.revisoes(pasta, revisoes),
         'modernas': relatorios.comparar_modernas(pasta, out, md, config.REFERENCIAS[0][0]),
         'pontuacao': relatorios.pontuacao_unanime(pasta, out, md),
         'sem_par': relatorios.sem_par(pasta, E, rel),
@@ -102,8 +110,9 @@ def processar(obra, publicar=False):
 
 
 def notas_da_edicao(notas, reg_em, reg_aj, partes):
-    ordem = {p['n']: i for i, p in enumerate(partes)}
-    completo = {p['n']: ' '.join((x if isinstance(x, str) else ' '.join(x['verso'])) for x in p['paragrafos']) + ' ' + p['titulo']
+    rotulo = lambda p: p['n'] or p['titulo']         # partes sem número (prólogo...): pelo título
+    ordem = {rotulo(p): i for i, p in enumerate(partes)}
+    completo = {rotulo(p): ' '.join((x if isinstance(x, str) else ' '.join(x['verso'])) for x in p['paragrafos']) + ' ' + p['titulo']
                 for p in partes}
 
     def onde(frase):
@@ -122,11 +131,13 @@ def notas_da_edicao(notas, reg_em, reg_aj, partes):
     for r in reg_aj:
         if r['tipo'] != 'pontuacao':
             continue
-        juntar = lambda s: texto(s.replace('¶', ' ').split())
+        juntar = lambda s: texto([t for t in s.split() if t != '¶' and not t.startswith('#')])
         pont.append((r['parte'], juntar(f"{r['antes']} {r['de']} {r['depois']}"), juntar(f"{r['antes']} {r['para']} {r['depois']}")))
     pont.sort(key=lambda x: ordem.get(x[0], 9999))
     mant = [{'cap': onde(fr), 'texto': fr, 'variante': v, 'obs': o} for fr, v, o in getattr(notas, 'MANTIDAS', [])]
+    extra = {k: v for k, v in (('base', getattr(notas, 'BASE', None)), ('secoes', getattr(notas, 'SECOES', None))) if v}
     return {
+        **extra,
         'apresentacao': notas.APRESENTACAO,
         'fontes': notas.FONTES,
         'erros': [{'cap': c, 'de': d, 'para': p} for c, d, p in erros],

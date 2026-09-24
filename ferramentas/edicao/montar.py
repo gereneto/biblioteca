@@ -98,7 +98,7 @@ def partes(out, flags, versos=None, titulos=None, fim=('FIM',)):
         t = c['titulo'] or ''
         t = re.sub(r'(?<!\.)\.$', '', t)       # ponto tipográfico do título
         t = re.sub(r'\.»$', '»', t)
-        c['titulo'] = (titulos or {}).get(c['n'], t)
+        c['titulo'] = (titulos or {}).get(c['n'], (titulos or {}).get(t, t))   # pelo número ou pelo próprio título
         for k, p in enumerate(c['paragrafos']):
             if isinstance(p, str) and versos and p in versos:
                 c['paragrafos'][k] = {'verso': versos[p]}
@@ -134,6 +134,9 @@ def publicar(destino, meta, obra, edicao, comentario=''):
     if meta.get('descricao'):
         linhas.append(f"  descricao: {json.dumps(meta['descricao'], ensure_ascii=False)},")
     linhas.append('  edicao: {')
+    for k in ('base', 'secoes'):                 # rótulos próprios da obra (opcionais)
+        if edicao.get(k):
+            linhas.append(f'    {k}: {json.dumps(edicao[k], ensure_ascii=False)},')
     linhas.append(f"    apresentacao: `{_tpl(edicao.get('apresentacao', ''))}`,")
     chaves = [k for k in ('fontes', 'erros', 'tradicao', 'pontuacao', 'mantidas') if edicao.get(k)]
     for ci, k in enumerate(chaves):

@@ -28,6 +28,12 @@ def sitios(pasta, sitios_):
     return _grava(pasta, 'sitios.tsv', ['decisão', 'apoio', 'antes', 'escolha', 'transcrições', 'modernas', 'depois'], linhas)
 
 
+def revisoes(pasta, reg):
+    """Leituras da moderna adotadas porque o OCR da edição-base as confirma (para conferência)."""
+    return _grava(pasta, 'revisoes.tsv', ['antes', 'de', 'para', 'ocr', 'depois'],
+                  [[r['antes'], r['de'], r['para'], r['ruidoso'], r['depois']] for r in reg])
+
+
 def comparar_modernas(pasta, out, modernas, principal):
     """Palavras em que o texto final difere das edições modernas.
     Lista quando a referência principal difere ou quando todas as demais concordam entre si."""

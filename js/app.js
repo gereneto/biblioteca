@@ -76,6 +76,9 @@
   }
 
   function plural(n, s, p) { return n + ' ' + (n === 1 ? s : p); }
+  // partes numeradas (capítulos); dedicatória, prólogo etc. não entram na conta
+  function numeradas(o) { return o.partes.filter(function (p) { return p.n; }).length || o.partes.length; }
+  function rotuloPasso(p) { return [esc(p.n), p.titulo ? inline(p.titulo) : ''].filter(Boolean).join(' · '); }
 
   /* Ordem dos gêneros na página do autor e o título de cada grupo */
   var GENEROS = ['Romance', 'Novela', 'Contos', 'Poesia', 'Teatro', 'Crônica', 'Crítica', 'Tradução'];
@@ -209,7 +212,7 @@
         var d = o.divisao || { singular: 'parte', plural: 'partes' };
         html += '<a class="cartao" href="#/o/' + o.id + '">' +
           '<span class="cartao-titulo"><em>' + esc(o.titulo) + '</em></span>' +
-          '<span class="cartao-meta">' + esc(String(o.ano || '')) + (o.ano ? ' · ' : '') + plural(o.partes.length, d.singular, d.plural) + '</span>' +
+          '<span class="cartao-meta">' + esc(String(o.ano || '')) + (o.ano ? ' · ' : '') + plural(numeradas(o), d.singular, d.plural) + '</span>' +
           (o.descricao ? '<span class="cartao-texto">' + inline(o.descricao) + '</span>' : '') +
           '</a>';
       });
@@ -269,14 +272,14 @@
 
     var html = '<article class="folha leitura">' +
       '<header class="cabeca-parte">' +
-      '<p class="num-parte">' + esc(p.n) + '</p>' +
+      (p.n ? '<p class="num-parte">' + esc(p.n) + '</p>' : '') +
       (p.titulo ? '<h1>' + inline(p.titulo) + '</h1>' : '') +
       '</header>' +
       '<div class="texto">' + blocos(p.texto) + '</div>' +
       (seg ? '' : '<p class="fim">Fim</p>') +
       '<nav class="passos" aria-label="Navegação entre ' + esc(o.divisao ? o.divisao.plural : 'partes') + '">' +
-      (ant ? '<a class="passo ant" href="#/o/' + o.id + '/' + (i - 1) + '" rel="prev"><span class="dir">← Anterior</span><span class="alvo">' + esc(ant.n) + (ant.titulo ? ' · ' + inline(ant.titulo) : '') + '</span></a>' : '<span class="passo vazio"></span>') +
-      (seg ? '<a class="passo seg" href="#/o/' + o.id + '/' + (i + 1) + '" rel="next"><span class="dir">Seguinte →</span><span class="alvo">' + esc(seg.n) + (seg.titulo ? ' · ' + inline(seg.titulo) : '') + '</span></a>' : '<a class="passo seg" href="#/o/' + o.id + '"><span class="dir">Índice</span><span class="alvo">' + esc(o.titulo) + '</span></a>') +
+      (ant ? '<a class="passo ant" href="#/o/' + o.id + '/' + (i - 1) + '" rel="prev"><span class="dir">← Anterior</span><span class="alvo">' + rotuloPasso(ant) + '</span></a>' : '<span class="passo vazio"></span>') +
+      (seg ? '<a class="passo seg" href="#/o/' + o.id + '/' + (i + 1) + '" rel="next"><span class="dir">Seguinte →</span><span class="alvo">' + rotuloPasso(seg) + '</span></a>' : '<a class="passo seg" href="#/o/' + o.id + '"><span class="dir">Índice</span><span class="alvo">' + esc(o.titulo) + '</span></a>') +
       '</nav>' +
       '<p class="posicao">' + i + ' de ' + total + ' · <a href="#/o/' + o.id + '">índice</a></p>' +
       '</article>';
@@ -285,7 +288,7 @@
   }
 
   function listaVariantes(itens, rotDe, rotPara, rotParte) {
-    return '<table class="variantes"><thead><tr><th>' + esc(rotParte) + '</th><th>' + rotDe + '</th><th>' + rotPara + '</th></tr></thead><tbody>' +
+    return '<table class="variantes"><thead><tr><th>' + esc(rotParte) + '</th><th>' + esc(rotDe) + '</th><th>' + esc(rotPara) + '</th></tr></thead><tbody>' +
       itens.map(function (v) {
         return '<tr><td class="cap">' + esc(v.cap) + '</td><td>' + esc(v.de) + '</td><td>' + esc(v.para) + '</td></tr>';
       }).join('') + '</tbody></table>';
@@ -310,24 +313,38 @@
       '<header class="cabeca"><h1>Sobre esta edição</h1><p class="meta"><em>' + esc(o.titulo) + '</em> · ' + esc(a.nome) + '</p></header>' +
       '<div class="texto">' + blocos(e.apresentacao || '') + '</div>';
 
+    // títulos das seções: cada obra pode trocá-los em edicao.secoes (o padrão é o de Dom Casmurro)
+    var S = e.secoes || {};
+    function secao(nome, padrao) {
+      var s = S[nome] || {};
+      return {
+        titulo: s.titulo || padrao.titulo, explica: s.explica || padrao.explica,
+        de: s.de || padrao.de || rotBase, para: s.para || padrao.para
+      };
+    }
+    var s;
     if (e.erros && e.erros.length) {
-      html += '<h2>Erros tipográficos da 1ª edição corrigidos</h2>' +
-        '<p class="explica">Grafia da 1ª edição nas duas colunas. ' + e.erros.length + ' correções.</p>' +
-        listaVariantes(e.erros, rotBase, 'Corrigido', rotParte);
+      s = secao('erros', { titulo: 'Erros tipográficos da 1ª edição corrigidos', explica: 'Grafia da 1ª edição nas duas colunas.', para: 'Corrigido' });
+      html += '<h2>' + esc(s.titulo) + '</h2>' +
+        '<p class="explica">' + esc(s.explica) + ' ' + e.erros.length + ' correções.</p>' +
+        listaVariantes(e.erros, s.de, s.para, rotParte);
     }
     if (e.tradicao && e.tradicao.length) {
-      html += '<h2>Lições da 2ª edição adotadas</h2>' +
-        '<p class="explica">Leituras em que todas as edições posteriores concordam contra a 1ª. Grafia da 1ª edição.</p>' +
-        listaVariantes(e.tradicao, rotBase, 'Adotado', rotParte);
+      s = secao('tradicao', { titulo: 'Lições da 2ª edição adotadas', explica: 'Leituras em que todas as edições posteriores concordam contra a 1ª. Grafia da 1ª edição.', para: 'Adotado' });
+      html += '<h2>' + esc(s.titulo) + '</h2>' +
+        '<p class="explica">' + esc(s.explica) + '</p>' +
+        listaVariantes(e.tradicao, s.de, s.para, rotParte);
     }
     if (e.pontuacao && e.pontuacao.length) {
-      html += '<h2>Pontuação da 2ª edição adotada</h2>' +
-        '<p class="explica">Mesmo critério: só onde toda a tradição posterior concorda. Grafia atualizada.</p>' +
-        listaVariantes(e.pontuacao, rotBase, 'Adotado', rotParte);
+      s = secao('pontuacao', { titulo: 'Pontuação da 2ª edição adotada', explica: 'Mesmo critério: só onde toda a tradição posterior concorda. Grafia atualizada.', para: 'Adotado' });
+      html += '<h2>' + esc(s.titulo) + '</h2>' +
+        '<p class="explica">' + esc(s.explica) + '</p>' +
+        listaVariantes(e.pontuacao, s.de, s.para, rotParte);
     }
     if (e.mantidas && e.mantidas.length) {
-      html += '<h2>Leituras da 1ª edição mantidas</h2>' +
-        '<p class="explica">Pontos em que parte das edições modernas lê diferente.</p>' +
+      s = secao('mantidas', { titulo: 'Leituras da 1ª edição mantidas', explica: 'Pontos em que parte das edições modernas lê diferente.' });
+      html += '<h2>' + esc(s.titulo) + '</h2>' +
+        '<p class="explica">' + esc(s.explica) + '</p>' +
         '<table class="variantes"><thead><tr><th>' + esc(rotParte) + '</th><th>Este texto</th><th>Outras edições</th></tr></thead><tbody>' +
         e.mantidas.map(function (v) {
           return '<tr><td class="cap">' + esc(v.cap) + '</td><td>' + esc(v.texto) + '</td><td>' + esc(v.variante) +

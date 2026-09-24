@@ -65,3 +65,36 @@ def folha(obra_id, arquivo, paginas, trechos, saida):
         folha_.save(nome)
         arquivos.append(nome)
     return arquivos
+
+
+# ------------------------------------------------------------------ fac-símiles em PDF (Brasiliana USP etc.)
+
+def pdf_folha(pdf, trechos, saida, dpi=110):
+    """Acha cada trecho no texto (OCR) das páginas do PDF e empilha as páginas encontradas, 2 por folha."""
+    import fitz
+    from PIL import Image, ImageDraw
+    doc = fitz.open(pdf)
+    textos = [_norm(doc[k].get_text()) for k in range(doc.page_count)]
+    imagens = []
+    for q in trechos:
+        qn = _norm(q)
+        k = next((i for i, t in enumerate(textos) if qn in t), None)
+        if k is None:
+            print('não achei:', q)
+            continue
+        pix = doc[k].get_pixmap(dpi=dpi)
+        im = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
+        ImageDraw.Draw(im).rectangle((0, 0, im.width, 18), fill='white')
+        ImageDraw.Draw(im).text((4, 3), f'{q}  [pág. {k + 1}]', fill='red')
+        imagens.append(im)
+    arquivos = []
+    for k in range(0, len(imagens), 2):
+        g = imagens[k:k + 2]
+        f = Image.new('RGB', (sum(i.width for i in g) + 10, max(i.height for i in g)), 'white')
+        x = 0
+        for i in g:
+            f.paste(i, (x, 0)); x += i.width + 10
+        nome = f'{saida}_{k // 2}.png'
+        f.save(nome)
+        arquivos.append(nome)
+    return arquivos

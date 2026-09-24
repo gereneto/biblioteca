@@ -10,7 +10,7 @@ import subprocess
 import unicodedata
 
 from . import rede
-from .tokens import VERSO
+from .tokens import LACUNA, VERSO
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # .../ferramentas
 
@@ -55,7 +55,11 @@ def partir_por_cabecalhos(blocos, cabecalhos, titulo_seguinte=True, verso_indent
                     break
         if m:
             gd = m.groupdict()
-            atual = {'n': (gd.get('n') or bs).strip(), 'titulo': (gd.get('t') or '').strip(), 'paras': []}
+            if 'n' in gd:
+                n = gd['n'] or ''
+            else:
+                n = '' if 't' in gd else bs          # cabeçalho sem número (Prólogo, Ao leitor...)
+            atual = {'n': n.strip(), 'titulo': (gd.get('t') or '').strip(), 'paras': []}
             obra.append(atual)
             espera_titulo = titulo_seguinte and not gd.get('t')
             continue
@@ -128,23 +132,51 @@ def _juntar_hifen(a, b):
 
 
 def _expandir_modelos(t):
+    t = re.sub(r'\[\[(?:[^|\]]*\|)?([^\]]*)\]\]', r'\1', t)                                  # [[alvo|texto]]
+    t = re.sub(r'\|\s*(?:fs|lh|align|largura[\w-]*|width|style|class|margem[\w-]*|size|separador)\s*=\s*[^|}]*', '', t)
+    t = re.sub(r'\{\{tabela\b.*?\n\}\}', '', t, flags=re.S)
     for _ in range(6):
         t = re.sub(r'\{\{pt\|[^|}]*\|([^|}]*)\}\}', r'\1', t, flags=re.I)
-        t = re.sub(r'\{\{(?:fine|smaller|small|larger|x-larger|xx-larger|xxx-larger|xxxx-larger|sc|sc2|j|d|gap|c|C|lh|center|centro|Centralizado|direita)\|([^{}]*)\}\}',
-                   lambda m: '\u0001C' + m.group(1) + '\u0002' if re.match(r'\{\{(c|C|center|centro|Centralizado)\|', m.group(0)) else m.group(1), t)
+        t = re.sub(r'\{\{(?:fine|smaller|small|larger|x-larger|xx-larger|xxx-larger|xxxx-larger|sc|sc2|j|d|gap|c|C|ch|center|centro|Centralizado|direita)\|([^{}]*)\}\}',
+                   lambda m: '\u0001C' + m.group(1) + '\u0002' if re.match(r'\{\{(c|C|ch|center|centro|Centralizado)\|', m.group(0)) else m.group(1), t)
         t = re.sub(r'\{\{(?:t2|T2|t3|T3)\|([^{}]*)\}\}', '\u0001C' + r'\1' + '\u0002', t)
         t = re.sub(r'\{\{Bloco centro\|(?:align=\w+\|)?([^{}]*)\}\}', '\n\n' + VERSO + r'\1' + '\n\n', t)
-        t = re.sub(r'\{\{(?:dhr|gap|nop|rule|extrair imagem|sic)(\|[^{}]*)?\}\}', lambda m: '\n\n' if 'nop' in m.group(0) else '', t)
+        t = re.sub(r'\{\{(?:dhr|lh|gap|nop|rule|extrair imagem|sic)(\|[^{}]*)?\}\}', lambda m: '\n\n' if 'nop' in m.group(0) else '', t)
+        # demais modelos: fica o último argumento posicional ({{sb|Sterne}}, {{Reconstruído|...}})
+        t = re.sub(r'\{\{([^{}]*)\}\}', _ultimo_argumento, t)
+    t = re.sub(r'\{\{[^{}]*\}\}', '', t)
     return t
 
 
-def wikisource(obra_id, arquivo, primeira, ultima, rom=r'^[IVXLC]+$'):
-    """Texto corrido das páginas; cabeçalhos centrados viram partes quando são numerais romanos."""
+_MODELOS_TRATADOS = {'pt', 'Bloco centro', 'c', 'C', 'ch', 'center', 'centro', 'Centralizado', 't2', 'T2', 't3', 'T3',
+                     'fine', 'smaller', 'small', 'larger', 'x-larger', 'xx-larger', 'xxx-larger', 'xxxx-larger',
+                     'sc', 'sc2', 'j', 'd', 'gap', 'direita', 'dhr', 'lh', 'nop', 'rule', 'extrair imagem', 'sic'}
+
+
+def _ultimo_argumento(m):
+    partes = m.group(1).split('|')
+    nome = partes[0].strip()
+    if nome in _MODELOS_TRATADOS:
+        return m.group(0)                  # tratado pelas regras específicas
+    pos = [p for p in partes[1:] if '=' not in p]
+    return pos[-1] if pos else ''
+
+
+CAB_WS = r'^(?:CAP[IÍ]TULO\s+)?(?P<n>[IVXLC]+|PRIMEIRO)\.?$'
+
+
+def wikisource(obra_id, arquivo, primeira, ultima, rom=CAB_WS, qualidade_minima=None):
+    """Texto corrido das páginas; cabeçalhos (centrados ou soltos) que casam com `rom` viram partes.
+    Com `qualidade_minima`, as páginas não revisadas viram lacunas (ver tokens.LACUNA)."""
     pags = wikisource_paginas(obra_id, arquivo, primeira, ultima)
     corpo = ''
     for n in range(primeira, ultima + 1):
         v = pags.get(n)
-        if not v:
+        if not v or v['qualidade'] == 0:
+            continue
+        if qualidade_minima and (v['qualidade'] or 0) < qualidade_minima:
+            if not corpo.endswith(LACUNA + '\n\n'):
+                corpo += '\n\n' + LACUNA + '\n\n'
             continue
         bruto = v['texto']
         t = re.sub(r'<noinclude>.*?</noinclude>', '', bruto, flags=re.S)
@@ -157,6 +189,8 @@ def wikisource(obra_id, arquivo, primeira, ultima, rom=r'^[IVXLC]+$'):
             sep = '\n\n' if bruto.split('</noinclude>', 1)[-1].startswith('\n\n') else '\n'
             corpo += sep + t
     t = _expandir_modelos(corpo)
+    # blocos centrados de várias linhas (dedicatórias, epígrafes): sem linhas em branco por dentro
+    t = re.sub('\u0001C(.*?)\u0002', lambda m: '\u0001C' + re.sub(r'\n\s*\n+', '\n', m.group(1)).strip() + '\u0002', t, flags=re.S)
     t = re.sub(r'\[sic\]', '', t)
     t = t.replace("'''", '')
     t = re.sub(r"''(.*?)''", r'_\1_', t, flags=re.S)
@@ -170,15 +204,26 @@ def wikisource(obra_id, arquivo, primeira, ultima, rom=r'^[IVXLC]+$'):
             parte = parte.strip()
             if not parte:
                 continue
-            if parte.startswith('\u0001C'):
-                dentro = parte[2:-1].strip()
-                if rx.match(dentro):
-                    atual = {'n': dentro, 'titulo': None, 'paras': []}
-                    obra.append(atual)
-                elif atual is not None and atual['titulo'] is None:
+            centrado = parte.startswith('\u0001C')
+            dentro = parte[2:-1].strip() if centrado else parte
+            m = rx.match(dentro) if len(dentro) < 40 else None
+            if m:
+                n = m.groupdict().get('n') or dentro
+                atual = {'n': 'I' if n == 'PRIMEIRO' else n, 'titulo': None, 'paras': []}
+                obra.append(atual)
+                continue
+            if centrado:
+                if atual is not None and atual['titulo'] is None and '\n' not in dentro.strip():
                     atual['titulo'] = dentro
                 elif atual is not None:
-                    atual['paras'].append(limpar(dentro))
+                    atual['paras'].append(VERSO + '\n'.join(x.strip() for x in dentro.split('\n') if x.strip())
+                                          if '\n' in dentro.strip() else limpar(dentro))
+                else:
+                    atual = {'n': '0', 'titulo': dentro, 'paras': []}
+                    obra.append(atual)
+                continue
+            if atual is not None and atual['titulo'] is None and len(parte) < 80 and not atual['paras']:
+                atual['titulo'] = parte.replace('\n', ' ')
                 continue
             if atual is None:
                 atual = {'n': '0', 'titulo': '', 'paras': []}
@@ -199,8 +244,9 @@ def machadodeassis_net(obra_id, slug, conteudo):
     if os.path.exists(destino):
         caps = json.load(open(destino, encoding='utf-8'))
     else:
+        nav = {'User-Agent': 'Mozilla/5.0'}   # o site recusa agentes que não pareçam navegador
         pagina = rede.baixar(f'https://machadodeassis.net/texto/{slug}/{conteudo}',
-                             cache(obra_id, f'mdn_{conteudo}.html')).decode('utf-8')
+                             cache(obra_id, f'mdn_{conteudo}.html'), cabecalhos=nav).decode('utf-8')
         ids = re.findall(r'data-order="(\d+)" data-size="\d+" data-id="(\d+)"', pagina)
         ids = sorted({(int(o), int(i)) for o, i in ids})
         corpo = b'--XX\r\nContent-Disposition: form-data; name="loaded_chapters"\r\n\r\n\r\n--XX--\r\n'
@@ -209,14 +255,14 @@ def machadodeassis_net(obra_id, slug, conteudo):
             if cid in vistos:
                 continue
             for c in rede.baixar_json(f'https://machadodeassis.net/capitulo/content_id/{conteudo}/chapter_id/{cid}',
-                                      dados=corpo, cabecalhos={'Content-Type': 'multipart/form-data; boundary=XX'},
+                                      dados=corpo, cabecalhos=dict(nav, **{'Content-Type': 'multipart/form-data; boundary=XX'}),
                                       pausa=0.4):
                 vistos[c['content_id']] = c
         if not ids:  # texto de um capítulo só
             m = re.search(r'textManager\.chapterManager\.gotoChapter\(\s*(\d+)', pagina)
             if m:
                 for c in rede.baixar_json(f'https://machadodeassis.net/capitulo/content_id/{conteudo}/chapter_id/{m.group(1)}',
-                                          dados=corpo, cabecalhos={'Content-Type': 'multipart/form-data; boundary=XX'}):
+                                          dados=corpo, cabecalhos=dict(nav, **{'Content-Type': 'multipart/form-data; boundary=XX'})):
                     vistos[c['content_id']] = c
         caps = [vistos[i] for _, i in ids] if ids else list(vistos.values())
         json.dump(caps, open(destino, 'w', encoding='utf-8'), ensure_ascii=False)
@@ -261,3 +307,12 @@ def texto_por_linhas(s, cabecalhos, titulo_seguinte=False):
         else:
             blocos.append(l)
     return normalizar(partir_por_cabecalhos(blocos, cabecalhos, titulo_seguinte, verso_indentado=False))
+
+
+def internet_archive(obra_id, item, arquivo):
+    """Texto de um item do Internet Archive (arquivo _djvu.txt ou PDF com texto)."""
+    import urllib.parse
+    url = f'https://archive.org/download/{item}/{urllib.parse.quote(arquivo)}'
+    if arquivo.lower().endswith('.pdf'):
+        return pdf_texto(obra_id, url, 'ia_' + item)
+    return rede.baixar(url, cache(obra_id, f'ia_{item}.txt')).decode('utf-8', errors='replace')
