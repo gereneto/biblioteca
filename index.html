@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biblioteca</title>
+<meta name="description" content="Biblioteca de textos em domínio público: escolha o autor, a obra e leia parte por parte.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/estilo.css">
+<script defer src="js/app.js"></script>
+<!-- conteúdo: um arquivo por autor/obra, sempre depois do app.js -->
+<script defer src="conteudo/autores.js"></script>
+<script defer src="conteudo/machado-de-assis/dom-casmurro.js"></script>
+</head>
+<body>
+<a class="pular" href="#app">Ir para o texto</a>
+
+<header class="topo">
+  <div class="topo-int">
+    <a class="marca" href="#/">Biblioteca</a>
+    <nav class="topo-nav" id="trilha" aria-label="Trilha de navegação"></nav>
+    <div class="ferramentas">
+      <button type="button" id="fonte-menos" class="btn" aria-label="Diminuir a letra" title="Diminuir a letra">A−</button>
+      <button type="button" id="fonte-mais" class="btn" aria-label="Aumentar a letra" title="Aumentar a letra">A+</button>
+      <button type="button" id="tema" class="btn" aria-label="Alternar tema claro e escuro" title="Alternar tema">◐</button>
+    </div>
+  </div>
+  <div class="barra-progresso" id="progresso" hidden><span></span></div>
+</header>
+
+<main id="app" tabindex="-1"></main>
+
+<footer class="rodape">
+  <p>Textos em domínio público.</p>
+</footer>
+</body>
+</html>
