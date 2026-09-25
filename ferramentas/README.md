@@ -28,6 +28,11 @@ As fontes baixadas e os relatórios ficam em `ferramentas/cache/<obra>/` (fora d
      a das modernas, vale esta; e uma segunda passada (`revisar_pelo_ruidoso`) compara o
      texto com a moderna principal e adota as passagens que o OCR confirma (capítulos
      reescritos, cortes). Tudo vai para `revisoes.tsv`.
+   - **Edição revista só nas modernas** (`TRADICAO` no config; ex.: _Quincas Borba_, base
+     1891 e revisão de 1896 não digitalizada): onde todas as edições modernas concordam
+     contra o texto em palavras (não só em grafia ou abreviatura), vale a leitura delas; o
+     mesmo para a pontuação (sem aspas nem hífens). Cada troca vai para a página «Sobre
+     esta edição».
 3. **Intervenções** (`edicoes/<obra>/decisoes.py`, `EMENDAS`): erros tipográficos da
    edição-base (`erro`), lições da tradição posterior (`edicao`), erros das
    transcrições (`ocr`) e lições da edição-base conferidas no fac-símile que o confronto

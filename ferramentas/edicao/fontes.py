@@ -92,6 +92,7 @@ def gutenberg(obra_id, pg_id, cabecalhos, inicio=None, fim=None, titulo_seguinte
         s = s[:s.rindex(fim)]
     s = re.sub(r'\[(?:Illustra[^\]]*|Ilustra[^\]]*)\]', '', s)
     s = s.replace('--', '—')
+    s = html.unescape(s)                               # alguns textos trazem &amp;
     for a, b in (trocar or []):
         s = s.replace(a, b)
     return normalizar(partir_por_cabecalhos(re.split(r'\n\s*\n', s), cabecalhos, titulo_seguinte))
@@ -165,9 +166,10 @@ def _ultimo_argumento(m):
 CAB_WS = r'^(?:CAP[IÍ]TULO\s+)?(?P<n>[IVXLC]+|PRIMEIRO)\.?$'
 
 
-def wikisource(obra_id, arquivo, primeira, ultima, rom=CAB_WS, qualidade_minima=None):
+def wikisource(obra_id, arquivo, primeira, ultima, rom=CAB_WS, qualidade_minima=None, titulos=True):
     """Texto corrido das páginas; cabeçalhos (centrados ou soltos) que casam com `rom` viram partes.
-    Com `qualidade_minima`, as páginas não revisadas viram lacunas (ver tokens.LACUNA)."""
+    Com `qualidade_minima`, as páginas não revisadas viram lacunas (ver tokens.LACUNA).
+    titulos=False: as partes não têm título (só número), e nada depois do cabeçalho vira título."""
     pags = wikisource_paginas(obra_id, arquivo, primeira, ultima)
     corpo = ''
     for n in range(primeira, ultima + 1):
@@ -209,7 +211,7 @@ def wikisource(obra_id, arquivo, primeira, ultima, rom=CAB_WS, qualidade_minima=
             m = rx.match(dentro) if len(dentro) < 40 else None
             if m:
                 n = m.groupdict().get('n') or dentro
-                atual = {'n': 'I' if n == 'PRIMEIRO' else n, 'titulo': None, 'paras': []}
+                atual = {'n': 'I' if n == 'PRIMEIRO' else n, 'titulo': None if titulos else '', 'paras': []}
                 obra.append(atual)
                 continue
             if centrado:
@@ -270,7 +272,9 @@ def machadodeassis_net(obra_id, slug, conteudo):
     for c in caps:
         paras = []
         for m in re.finditer(r'<p[^>]*>(.*?)</p>', c['text'], re.S):
-            p = re.sub(r'<br\s*/?>', '\n', m.group(1))
+            # links de notas, às vezes malformados (um </a> dentro do atributo)
+            p = re.sub(r'<a\b(?:(?!<a\b).)*?textManager\.moveTo\([^)]*\)"\s*>', '', m.group(1), flags=re.S)
+            p = re.sub(r'<br\s*/?>', '\n', p)
             p = re.sub(r'</?(i|em)>', '_', p)
             p = html.unescape(re.sub(r'<[^>]+>', '', p)).replace(' ', ' ')
             p = re.sub(r'[ \t]+', ' ', p).strip()
@@ -316,3 +320,56 @@ def internet_archive(obra_id, item, arquivo):
     if arquivo.lower().endswith('.pdf'):
         return pdf_texto(obra_id, url, 'ia_' + item)
     return rede.baixar(url, cache(obra_id, f'ia_{item}.txt')).decode('utf-8', errors='replace')
+
+
+# ------------------------------------------------------------------ OCR de fac-símile (Brasiliana USP)
+
+def _romano_ocr(s):
+    """Número de capítulo lido por OCR: 'PRIMEIRO' -> 'I', 'CC1' -> 'CCI', 'XGV' -> 'XCV'."""
+    s = s.strip().rstrip('.').upper()
+    if 'MEIRO' in s:
+        return 'I'
+    s = s.translate(str.maketrans({'1': 'I', 'L': 'I', 'Í': 'I', 'G': 'C', 'Y': 'V', 'H': 'II'}))
+    s = re.sub(r'[^IVXLC]', '', s)
+    return s
+
+
+def ocr_por_linhas(texto, inicio, fim, cabecalho, lixo=()):
+    """Obra a partir do texto de um PDF com OCR em que cada parágrafo é (quase sempre) uma linha.
+    cabecalho: regex com o grupo 'n' (número do capítulo, corrigido por _romano_ocr);
+    lixo: regex de linhas a descartar (cabeços, números de página). Junta os parágrafos
+    partidos pelas quebras de página e as palavras hifenizadas."""
+    s = texto.replace('\f', '\n')
+    s = re.sub(r'\xad\s*', '', s)
+    s = s[s.index(inicio):]
+    if fim:
+        s = s[:s.rindex(fim)]
+    rx_cab = re.compile(cabecalho)
+    rx_lixo = [re.compile(x) for x in lixo] + [re.compile(r'^[\divxlcIVXLC.]{1,6}$')]
+    obra, parte, par = [], None, ''
+
+    def fecha():
+        nonlocal par
+        if par and parte is not None:
+            parte['paras'].append(limpar(par))
+        par = ''
+
+    for l in s.split('\n'):
+        l = l.strip()
+        if not l or any(r.match(l) for r in rx_lixo) or sum(c.isalpha() for c in l) < 2:
+            continue
+        m = rx_cab.match(l)
+        if m:
+            fecha()
+            parte = {'n': _romano_ocr(m.group('n')), 'titulo': '', 'paras': []}
+            obra.append(parte)
+            continue
+        if par.endswith('-') and not par.endswith('--'):
+            par = par[:-1] + l
+        elif par and (re.match(r'^[a-zà-ÿ]', l) or not re.search(r'[.!?:»…"”]$', par)):
+            par += ' ' + l
+        else:
+            fecha()
+            par = l
+    fecha()
+    return normalizar(obra)

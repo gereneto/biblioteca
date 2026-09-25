@@ -130,6 +130,7 @@ FORMAS_ATUAIS = [
     (r'contacto(s?)', r'contato\1'),
     (r'estupefact(o|a|os|as)', r'estupefat\1'),
     (r'erect(o|a|os|as)', r'eret\1'),
+    (r'súbdit(o|a|os|as)', r'súdit\1'),
 ]
 _FORMAS = [(re.compile(a + r'\Z'), b) for a, b in FORMAS_ATUAIS]
 

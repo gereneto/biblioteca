@@ -52,6 +52,22 @@ def juntar(toks, flags):
     return s.strip()
 
 
+def aspas_angulares(out):
+    """Aspas retas ou curvas que sobrarem viram as angulares do autor, abrindo e fechando
+    dentro de cada parágrafo."""
+    res, aberta = [], False
+    for t in out:
+        if t == '¶':
+            aberta = False
+        elif t in ('"', '“', '”'):
+            t = '»' if aberta else '«'
+            aberta = not aberta
+        elif t in ('«', '»'):
+            aberta = t == '«'
+        res.append(t)
+    return res
+
+
 def partes(out, flags, versos=None, titulos=None, fim=('FIM',)):
     """versos: {texto do parágrafo: [linhas]} para citações em verso compostas à parte."""
     toks, fl = _preparar(out, flags)

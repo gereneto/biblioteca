@@ -36,7 +36,7 @@ Acordo de 1990) · **MEC** Obra Completa, Nova Aguilar, 1994 (texto moderno).
 |---|------|-----------|-----------------|--------------|---------|----------|
 | 1 | _Dom Casmurro_ | 1899, Garnier | 2ª ed. 1900 (não digitalizada) | PG 55752 · WS · Stolfi | MDN 11503 · MEC | **publicado** |
 | 2 | _Memórias Póstumas de Brás Cubas_ | 1881, Tip. Nacional (antes na _Revista Brasileira_, 1880) | «3ª ed.» 1896, Garnier, revista, com prólogo (fac-símile BBM 7815, só OCR); «4ª ed.» 1899 (não digitalizada) | PG 54829 (1881) · WS (1881, parcial) · OCR de 1896 | MDN 5985 · MEC · Câmara | **publicado** (base 1896) |
-| 3 | _Quincas Borba_ | 1891, Garnier (antes em _A Estação_, 1886–1891) | 2ª ed. 1896; 3ª ed. 1899, com prólogo | PG 55682 (1891) · WS (1891) | MDN 8340 · MEC | a fazer |
+| 3 | _Quincas Borba_ | 1891, Garnier, com errata (antes em _A Estação_, 1886–1891) | 2ª ed. 1896, muito revista; 3ª ed. 1899, com prólogo (nenhuma digitalizada) | PG 55682 (1891) · WS (1891, parcial) · OCR BBM 5251 | MDN 8340 · MEC · Objetivo (= Aguilar) | **publicado** (1891 + lições da edição revista) |
 | 4 | _Esaú e Jacó_ | 1904, Garnier | — | PG 56737 · WS (1904) | MDN 13998 · MEC | a fazer |
 | 5 | _Memorial de Aires_ | 1908, Garnier | — | PG 55797 (1908) · WS (1908) | MDN 16866 · MEC | a fazer |
 | 6 | _Iaiá Garcia_ | 1878, G. Vianna (antes em _O Cruzeiro_) | 2ª ed. 1898 | PG 67780 (reimpr. 1919) · WS (1878) | MDN 4304 · MEC | a fazer |

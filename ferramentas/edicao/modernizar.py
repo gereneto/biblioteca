@@ -212,3 +212,42 @@ def italico_por_votacao(E0, transcricoes, desempate=None):
         else:
             F.append(False)
     return E, F
+
+
+# ------------------------------------------------------------------ pontuação da edição revista
+
+_PONT_K = {'«': '"', '»': '"', '“': '"', '”': '"', '–': '—', '…': '...', '....': '...'}
+
+
+def pontuacao_das_modernas(out, flags, modernas):
+    """Onde todas as edições modernas pontuam igual entre si e diferente do texto (só pontuação,
+    sem aspas nem hífens), vale a pontuação delas. Devolve (out, flags, registro)."""
+    from .tokens import divergencias
+    k = lambda t: _PONT_K.get(t, t).lower()
+    fora = lambda t: t in ('_', '¶', '/') or t.startswith('#')
+    idx = [i for i, t in enumerate(out) if not fora(t)]
+    ours = [out[i] for i in idx]
+    Ms = [[t for t in achatar(m) if not fora(t)] for m in modernas]
+    opss = [alinhar(ours, M, chave=k) for M in Ms]
+    trocas = []
+    for s, e, spans in divergencias(ours, opss):
+        base = [k(x) for x in ours[s:e]]
+        ms = [[k(x) for x in M[a:b]] for M, (a, b) in zip(Ms, spans)]
+        if not all(m == ms[0] for m in ms) or ms[0] == base:
+            continue
+        todos = base + ms[0]
+        if any(e_palavra(x) or x in ('"', '-', "'", '(', ')') for x in todos):
+            continue
+        a, b = spans[0]
+        trocas.append((s, e, Ms[0][a:b]))
+    reg = []
+    for s, e, novo in reversed(trocas):
+        i0 = idx[s] if s < e else (idx[s - 1] + 1 if s else 0)
+        i1 = idx[e - 1] + 1 if s < e else i0
+        antes = ' '.join(t for t in out[max(0, i0 - 6):i0])
+        depois = ' '.join(t for t in out[i1:i1 + 4])
+        reg.append({'tipo': 'pontuacao', 'parte': parte_em(out, i0), 'antes': antes,
+                    'de': ' '.join(out[i0:i1]), 'para': ' '.join(novo), 'depois': depois})
+        out = out[:i0] + list(novo) + out[i1:]
+        flags = flags[:i0] + [False] * len(novo) + flags[i1:]
+    return out, flags, reg[::-1]

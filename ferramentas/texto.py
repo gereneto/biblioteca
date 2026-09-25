@@ -59,6 +59,11 @@ def processar(obra, publicar=False):
     if ruidoso:
         E0, revisoes = estabelecer.revisar_pelo_ruidoso(E0, tr[ruidoso], md[config.REFERENCIAS[0][0]])
         print(f'leituras da moderna confirmadas pelo {ruidoso}:', len(revisoes))
+    tradicao = []
+    if getattr(config, 'TRADICAO', None):     # edição revista transmitida só pelas modernas
+        E0, tradicao = estabelecer.adotar_modernas(E0, [md[n] for n in config.TRADICAO])
+        print('lições da edição revista (todas as modernas concordam):', len(tradicao))
+        revisoes += [dict(r, ruidoso='') for r in tradicao]
 
     # 2. itálico (o testemunho ruidoso não vota: o OCR não traz itálico)
     E, ital = modernizar.italico_por_votacao(E0, {n: o for n, o in tr.items() if n != ruidoso},
@@ -72,10 +77,16 @@ def processar(obra, publicar=False):
     out, origem, rel = modernizar.modernizar(E, refs, getattr(dec, 'MANUAL', {}))
     flags = [ital[o] if (t[:1].isalpha()) else False for t, o in zip(out, origem)]
 
-    # 5. ajustes finais
+    # 5. pontuação da edição revista (só com config.TRADICAO) e ajustes finais
+    reg_pt = []
+    if getattr(config, 'TRADICAO', None):
+        out, flags, reg_pt = modernizar.pontuacao_das_modernas(out, flags, [md[n] for n in config.TRADICAO])
+        print('pontuação da edição revista:', len(reg_pt))
     out, flags, reg_aj = modernizar.ajustes_finais(out, flags, [a[1:] for a in dec.AJUSTES])
     for r, a in zip(reg_aj, dec.AJUSTES):
         r['tipo'] = a[0]
+    reg_aj = reg_pt + reg_aj
+    out = montar.aspas_angulares(out)
 
     partes = montar.partes(out, flags, getattr(dec, 'VERSOS', None), getattr(dec, 'TITULOS', None))
 
@@ -99,7 +110,7 @@ def processar(obra, publicar=False):
     print(len(partes), 'partes;', sum(len(p['paragrafos']) for p in partes), 'parágrafos')
 
     if publicar:
-        edicao = notas_da_edicao(notas, reg_em, reg_aj, partes)
+        edicao = notas_da_edicao(notas, reg_em, reg_aj, partes, tradicao)
         meta = config.META
         destino = os.path.join(RAIZ, 'conteudo', meta['autor'], meta['id'] + '.js')
         montar.publicar(destino, meta, partes, edicao, getattr(notas, 'COMENTARIO', ''))
@@ -109,7 +120,7 @@ def processar(obra, publicar=False):
         print('publicado:', destino)
 
 
-def notas_da_edicao(notas, reg_em, reg_aj, partes):
+def notas_da_edicao(notas, reg_em, reg_aj, partes, tradicao=()):
     rotulo = lambda p: p['n'] or p['titulo']         # partes sem número (prólogo...): pelo título
     ordem = {rotulo(p): i for i, p in enumerate(partes)}
     completo = {rotulo(p): ' '.join((x if isinstance(x, str) else ' '.join(x['verso'])) for x in p['paragrafos']) + ' ' + p['titulo']
@@ -125,8 +136,10 @@ def notas_da_edicao(notas, reg_em, reg_aj, partes):
     erros = [(r['parte'], sem_par(r['de']), sem_par(r['para'])) for r in reg_em if r['tipo'] == 'erro']
     erros += list(getattr(notas, 'ERROS_ANTERIORES', []))
     erros.sort(key=lambda x: ordem.get(x[0], 9999))
-    trad = sorted([(r['parte'], sem_par(r['de']), sem_par(r['para'])) for r in reg_em if r['tipo'] == 'edicao'],
-                  key=lambda x: ordem.get(x[0], 9999))
+    sem_cab = lambda x: ' '.join(t for t in x.split() if not t.startswith('#'))
+    trad = [(r['parte'], sem_par(r['de']), sem_par(r['para'])) for r in reg_em if r['tipo'] == 'edicao']
+    trad += [(r['parte'], sem_cab(sem_par(r['de'])), sem_cab(sem_par(r['para']))) for r in tradicao]
+    trad.sort(key=lambda x: ordem.get(x[0], 9999))
     pont = []
     for r in reg_aj:
         if r['tipo'] != 'pontuacao':
