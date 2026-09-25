@@ -2,9 +2,10 @@
 
 A grafia moderna de cada palavra vem das edições de referência (na ordem dada; a primeira
 costuma ser o machadodeassis.net, já no Acordo de 1990) e só é aceita quando é a MESMA
-palavra (esqueleto igual). Formas diferentes (cousa/coisa) ficam como na edição-base.
+palavra (esqueleto igual). Depois, as formas antigas de palavras atuais passam à forma de
+hoje (grafia.FORMAS_ATUAIS: cousa -> coisa, dous -> dois...).
 """
-from .grafia import ao1990, chave, igualar_caixa, mesma_palavra
+from .grafia import ao1990, chave, forma_atual, igualar_caixa, mesma_palavra
 from .tokens import TOK, achatar, alinhar, e_palavra
 
 
@@ -139,6 +140,7 @@ def modernizar(E, referencias, manual=None):
         if velho in manual and fonte != 'manual':
             novo, fonte = manual[velho].split(' '), 'manual'
         novo = [igualar_caixa(E[grupo[0]], novo[0])] + novo[1:]
+        novo = [forma_atual(x) for x in novo]          # cousa -> coisa, dous -> dois...
         rel.append((velho, ' '.join(novo), fonte, i))
         out.extend(novo)
         origem.extend([grupo[0]] * len(novo))

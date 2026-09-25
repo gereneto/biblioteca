@@ -8,18 +8,21 @@ Cada livro passa pelo mesmo processo de _Dom Casmurro_ (ver `ferramentas/README.
 2. **Confronto** de todas as transcrições digitais dessa edição, palavra por palavra;
    o fac-símile decide as dúvidas.
 3. **Correção** apenas dos erros tipográficos evidentes, cada um registrado.
-4. **Ortografia** atualizada pelo Acordo de 1990, sem tocar em vocabulário, formas,
+4. **Ortografia** atualizada pelo Acordo de 1990, e formas antigas de palavras atuais
+   trocadas pela de hoje (_cousa_ → coisa, _dous_ → dois); sem tocar em vocabulário,
    colocação pronominal, mesóclises nem pontuação do autor.
 5. **Divisão** do livro respeitada: capítulos nos romances, contos nas coletâneas,
-   poemas nos livros de versos, peças e atos no teatro.
+   poemas nos livros de versos.
 6. Página **Sobre esta edição** com a lista completa das intervenções.
 
 As decisões de cada livro ficam em `edicoes/<obra>/`.
 
-## Ordem de trabalho
+## Escopo e ordem de trabalho
 
-Primeiro os romances, da maturidade para a juventude; depois os contos, a poesia, o teatro
-e, por fim, a obra dispersa reunida depois da morte do autor.
+Só romances, contos e poesia (sem teatro, traduções nem obra dispersa). Primeiro os
+romances, da maturidade para a juventude; depois as coletâneas de contos; por fim, a poesia.
+Das coletâneas que misturam gêneros (_Páginas Recolhidas_, _Relíquias de Casa Velha_),
+entram só os contos.
 
 ## Bibliografia
 
@@ -61,33 +64,3 @@ Acordo de 1990) · **MEC** Obra Completa, Nova Aguilar, 1994 (texto moderno).
 | 18 | _Crisálidas_ (versão original) | 1864, Garnier | WS (1864) | MEC | a fazer |
 | 19 | _Falenas_ (versão original) | 1870, Garnier | WS (1870) | MEC | a fazer |
 | 20 | _Americanas_ (versão original) | 1875, Garnier | WS (1875) | MEC | a fazer |
-
-### Teatro
-
-| # | Obra | 1ª edição | Transcrições | Moderno | Situação |
-|---|------|-----------|--------------|---------|----------|
-| 21 | _Desencantos_ | 1861, Paula Brito | WS (1861) | MEC | a fazer |
-| 22 | _O Caminho da Porta_ e _O Protocolo_ | 1863 | WS (coletânea _Teatro_, 1910) | MEC | a fazer |
-| 23 | _Quase Ministro_ | 1864 | WS (_Teatro_, 1910) | MEC | a fazer |
-| 24 | _Os Deuses de Casaca_ | 1866 | — (procurar) | MEC | a fazer |
-| 25 | _Tu, só tu, puro amor_ | 1881 | WS (_Teatro_, 1910) | MEC | a fazer |
-
-_Não consultes médico_ e _Lição de botânica_ entram com os livros em que o autor as
-recolheu (_Páginas Recolhidas_ e _Relíquias de Casa Velha_).
-
-### Traduções publicadas em livro
-
-| # | Obra | Edição | Transcrições | Situação |
-|---|------|--------|--------------|----------|
-| 26 | _Queda que as mulheres têm para os tolos_ (de V. Hénaux) | 1861, Paula Brito | WS (1861) | a fazer |
-| 27 | _Os Trabalhadores do Mar_ (de Victor Hugo) | 1866, Tip. Perseverança | WS (1866) | a fazer |
-
-### Obra dispersa (reunida depois da morte do autor)
-
-Por último, e com o mesmo critério de partir da primeira publicação:
-
-- _Casa Velha_ (novela publicada em _A Estação_, 1885–1886; em livro, 1944);
-- contos avulsos, fora das coletâneas (MDN tem cerca de 200 contos no total);
-- crônicas (_Bons Dias!_, _A Semana_, _Balas de Estalo_, _História de Quinze Dias_...);
-- crítica literária e teatral;
-- poesias avulsas e traduções dispersas.

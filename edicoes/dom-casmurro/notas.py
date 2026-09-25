@@ -15,7 +15,7 @@ APRESENTACAO = '''**Texto-base.** Este texto reproduz a primeira edição de _Do
 
 **Correções.** Corrigiram-se os erros tipográficos evidentes da primeira edição, quase todos de concordância («todo a pessoa», «todos os noites»), como já fizeram a segunda edição e a edição crítica. Nada mais foi emendado.
 
-**Ortografia.** A grafia foi atualizada pelo Acordo Ortográfico de 1990 (_chapéo_ → chapéu, _elle_ → ele, _Capitú_ → Capitu, _idéa_ → ideia). Só a grafia: o vocabulário, as formas e as construções do autor ficaram como estão — _cousa_, _dous_, _quatorze_, as mesóclises (_dir-me-ia_, _dar-se-ia_), a colocação dos pronomes, a pontuação, os travessões e as aspas angulares, os itálicos, a abreviatura _S._ (São) e os contos de réis (_1:070$000_). Quando os dicionários registram duas grafias para a mesma palavra, ficou a do autor.
+**Ortografia.** A grafia foi atualizada pelo Acordo Ortográfico de 1990 (_chapéo_ → chapéu, _elle_ → ele, _Capitú_ → Capitu, _idéa_ → ideia). As formas antigas de palavras que continuam em uso passaram à forma atual (_cousa_ → coisa, _dous_ → dois). O vocabulário e as construções do autor ficaram como estão — as mesóclises (_dir-me-ia_, _dar-se-ia_), a colocação dos pronomes, a pontuação, os travessões e as aspas angulares, os itálicos, a abreviatura _S._ (São) e os contos de réis (_1:070$000_).
 
 **Divisão.** O livro tem 148 capítulos curtos, numerados em romanos e titulados pelo autor. Cada capítulo é uma página desta biblioteca.'''
 
@@ -41,7 +41,7 @@ MANTIDAS = [
     ('aplaudiu a distinção', 'aplaudia', ''),
     ('despedia-se de três amigas', 'duas amigas', 'emenda da edição crítica (só duas são nomeadas); a tradição mais antiga conserva «três»'),
     ('pé de cadeira lascado', 'lascada', ''),
-    ('dous vãos de telhado', 'telhados', ''),
+    ('dois vãos de telhado', 'telhados', ''),
     ('que no-las matassem', 'matasse', 'a edição crítica também conserva «matassem»'),
     ('Lembro-me de um preto', 'Lembra-me', ''),
     ('É bem, qualquer que seja', 'E bem', 'lição das três primeiras edições (1899, 1900, 1924), também no título; «E bem» vem da edição Jackson (1957)'),

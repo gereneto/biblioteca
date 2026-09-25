@@ -1,11 +1,12 @@
 /* ---------------------------------------------------------------
    Biblioteca — aplicação de leitura
-   Autor → obra → parte (capítulo, canto, ato... conforme a obra).
+   Autor → gênero → obra → parte (capítulo, conto, poema... conforme a obra).
 
    Rotas (usam # para funcionar em qualquer hospedagem estática
    e também abrindo o index.html direto do disco):
      #/                      capa: autores e "continuar a leitura"
-     #/a/<autor>             obras do autor
+     #/a/<autor>             gêneros em que o autor tem obras
+     #/a/<autor>/<genero>    obras do autor nesse gênero (romances, contos, poesia...)
      #/o/<obra>              folha de rosto e índice da obra
      #/o/<obra>/<n>          parte n (1, 2, 3...) da obra
      #/o/<obra>/sobre        notas sobre o texto desta edição
@@ -80,10 +81,35 @@
   function numeradas(o) { return o.partes.filter(function (p) { return p.n; }).length || o.partes.length; }
   function rotuloPasso(p) { return [esc(p.n), p.titulo ? inline(p.titulo) : ''].filter(Boolean).join(' · '); }
 
-  /* Ordem dos gêneros na página do autor e o título de cada grupo */
+  /* Ordem dos gêneros na página do autor e o nome de cada um */
   var GENEROS = ['Romance', 'Novela', 'Contos', 'Poesia', 'Teatro', 'Crônica', 'Crítica', 'Tradução'];
   var PLURAIS = { 'Romance': 'Romances', 'Novela': 'Novelas', 'Contos': 'Contos', 'Poesia': 'Poesia',
     'Teatro': 'Teatro', 'Crônica': 'Crônicas', 'Crítica': 'Crítica', 'Tradução': 'Traduções' };
+
+  function nomeGenero(g) { return PLURAIS[g] || g; }
+  /* "Romance" -> "romances" (endereço da página do gênero) */
+  function slugGenero(g) {
+    return nomeGenero(g).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  }
+
+  /* Contagem de palavras do texto da obra (calculada uma vez) */
+  var PALAVRA = /[\p{L}\p{N}]+(?:[-'’][\p{L}\p{N}]+)*/gu;
+  function palavras(o) {
+    if (o._palavras === undefined) {
+      o._palavras = o.partes.reduce(function (n, p) {
+        return n + (String(p.texto).replace(/[_*|]/g, ' ').match(PALAVRA) || []).length;
+      }, 0);
+    }
+    return o._palavras;
+  }
+  function milhar(n) { return n.toLocaleString('pt-BR'); }
+
+  /* "1899 · 148 capítulos · 66.998 palavras" */
+  function fichaObra(o) {
+    var d = o.divisao || { singular: 'parte', plural: 'partes' };
+    return [o.ano ? String(o.ano) : '', plural(numeradas(o), d.singular, d.plural),
+      milhar(palavras(o)) + ' palavras'].filter(Boolean).join(' · ');
+  }
 
   /* ----------------------------- consultas ----------------------------- */
 
@@ -99,6 +125,19 @@
     return dados.obras.filter(function (o) { return o.autor === autorId; })
       .sort(function (a, b) { return (a.ano || 0) - (b.ano || 0) || a.titulo.localeCompare(b.titulo, 'pt'); });
   }
+  /* gêneros do autor, na ordem de GENEROS: [{genero, obras}] */
+  function generosDe(autorId) {
+    var grupos = {};
+    obrasDe(autorId).forEach(function (o) {
+      var g = o.genero || 'Outros';
+      (grupos[g] = grupos[g] || []).push(o);
+    });
+    return GENEROS.filter(function (g) { return grupos[g]; })
+      .concat(Object.keys(grupos).filter(function (g) { return GENEROS.indexOf(g) < 0; }).sort())
+      .map(function (g) { return { genero: g, obras: grupos[g] }; });
+  }
+  function trilhaGenero(a, g) { return { txt: nomeGenero(g), href: '#/a/' + a.id + '/' + slugGenero(g) }; }
+
   function autoresOrdenados() {
     return dados.autores.slice().sort(function (a, b) {
       return (a.ordem || a.nome).localeCompare(b.ordem || b.nome, 'pt');
@@ -179,46 +218,57 @@
       html += '<a class="cartao" href="#/a/' + a.id + '">' +
         '<span class="cartao-titulo">' + esc(a.nome) + '</span>' +
         '<span class="cartao-meta">' + esc(a.vida || '') + (a.vida ? ' · ' : '') + plural(obras.length, 'obra', 'obras') + '</span>' +
-        (obras.length ? '<span class="cartao-texto">' + obras.map(function (o) { return '<em>' + esc(o.titulo) + '</em>'; }).join(', ') + '</span>' : '') +
+        (obras.length ? '<span class="cartao-texto">' + generosDe(a.id).map(function (x) { return esc(nomeGenero(x.genero)); }).join(' · ') + '</span>' : '') +
         '</a>';
     });
     html += '</div>';
     render(html, '');
   }
 
+  function cabecaAutor(a) {
+    return '<header class="cabeca">' +
+      '<h1>' + esc(a.nome) + '</h1>' +
+      '<p class="meta">' + esc([a.nomeCompleto, a.vida].filter(Boolean).join(' · ')) + '</p>' +
+      (a.nota ? '<p class="nota-autor">' + inline(a.nota) + '</p>' : '') +
+      '</header>';
+  }
+
+  /* Página do autor: escolha do gênero */
   function paginaAutor(id) {
     var a = acharAutor(id);
     if (!a) return naoAchei();
     definirTrilha([{ txt: a.nome }]);
     definirProgresso(null);
-    var obras = obrasDe(a.id);
-    var html = '<div class="folha">' +
-      '<header class="cabeca">' +
-      '<h1>' + esc(a.nome) + '</h1>' +
-      '<p class="meta">' + esc([a.nomeCompleto, a.vida].filter(Boolean).join(' · ')) + '</p>' +
-      (a.nota ? '<p class="nota-autor">' + inline(a.nota) + '</p>' : '') +
-      '</header>';
-    /* obras agrupadas por gênero, na ordem de GENEROS; dentro do grupo, por ano */
-    var grupos = {};
-    obras.forEach(function (o) {
-      var g = o.genero || 'Outros';
-      (grupos[g] = grupos[g] || []).push(o);
-    });
-    var ordem = GENEROS.filter(function (g) { return grupos[g]; })
-      .concat(Object.keys(grupos).filter(function (g) { return GENEROS.indexOf(g) < 0; }).sort());
-    ordem.forEach(function (g) {
-      html += '<p class="secao-titulo">' + esc(PLURAIS[g] || g) + '</p>';
-      grupos[g].forEach(function (o) {
-        var d = o.divisao || { singular: 'parte', plural: 'partes' };
-        html += '<a class="cartao" href="#/o/' + o.id + '">' +
-          '<span class="cartao-titulo"><em>' + esc(o.titulo) + '</em></span>' +
-          '<span class="cartao-meta">' + esc(String(o.ano || '')) + (o.ano ? ' · ' : '') + plural(numeradas(o), d.singular, d.plural) + '</span>' +
-          (o.descricao ? '<span class="cartao-texto">' + inline(o.descricao) + '</span>' : '') +
-          '</a>';
-      });
+    var html = '<div class="folha">' + cabecaAutor(a) + '<p class="secao-titulo">Gêneros</p>';
+    generosDe(a.id).forEach(function (x) {
+      html += '<a class="cartao" href="#/a/' + a.id + '/' + slugGenero(x.genero) + '">' +
+        '<span class="cartao-titulo">' + esc(nomeGenero(x.genero)) + '</span>' +
+        '<span class="cartao-meta">' + plural(x.obras.length, 'obra', 'obras') + '</span>' +
+        '<span class="cartao-texto">' + x.obras.map(function (o) { return '<em>' + esc(o.titulo) + '</em>'; }).join(', ') + '</span>' +
+        '</a>';
     });
     html += '</div>';
     render(html, a.nome);
+  }
+
+  /* Obras do autor num gênero: título e ficha (ano, capítulos, palavras) */
+  function paginaGenero(id, slug) {
+    var a = acharAutor(id);
+    if (!a) return naoAchei();
+    var x = generosDe(a.id).filter(function (x) { return slugGenero(x.genero) === slug; })[0];
+    if (!x) return naoAchei();
+    definirTrilha([{ txt: a.nome, href: '#/a/' + a.id }, { txt: nomeGenero(x.genero) }]);
+    definirProgresso(null);
+    var html = '<div class="folha">' +
+      '<header class="cabeca"><h1>' + esc(nomeGenero(x.genero)) + '</h1><p class="meta">' + esc(a.nome) + '</p></header>';
+    x.obras.forEach(function (o) {
+      html += '<a class="cartao" href="#/o/' + o.id + '">' +
+        '<span class="cartao-titulo"><em>' + esc(o.titulo) + '</em></span>' +
+        '<span class="cartao-meta">' + esc(fichaObra(o)) + '</span>' +
+        '</a>';
+    });
+    html += '</div>';
+    render(html, nomeGenero(x.genero) + ' — ' + a.nome);
   }
 
   function paginaObra(id) {
@@ -226,7 +276,7 @@
     if (!o) return naoAchei();
     var a = acharAutor(o.autor) || { nome: o.autor, id: o.autor };
     var d = o.divisao || { singular: 'parte', plural: 'partes' };
-    definirTrilha([{ txt: a.nome, href: '#/a/' + a.id }, { txt: o.titulo }]);
+    definirTrilha([{ txt: a.nome, href: '#/a/' + a.id }, trilhaGenero(a, o.genero || 'Outros'), { txt: o.titulo }]);
     definirProgresso(null);
 
     var pos = posicaoSalva(o);
@@ -234,7 +284,7 @@
       '<header class="rosto">' +
       '<p class="rosto-autor">' + esc(a.nome) + '</p>' +
       '<h1>' + esc(o.titulo) + '</h1>' +
-      '<p class="meta">' + esc([o.genero, o.ano].filter(Boolean).join(' · ')) + '</p>' +
+      '<p class="meta">' + esc(fichaObra(o)) + '</p>' +
       (o.descricao ? '<p class="descricao">' + inline(o.descricao) + '</p>' : '') +
       '<p class="acoes">' +
       '<a class="botao" href="#/o/' + o.id + '/' + (pos || 1) + '">' + (pos && pos > 1 ? 'Continuar: ' + esc(rotuloParte(o, o.partes[pos - 1])) : 'Começar a ler') + '</a>' +
@@ -304,6 +354,7 @@
     var rotBase = e.base || '1ª edição';
     definirTrilha([
       { txt: a.nome, href: '#/a/' + a.id },
+      trilhaGenero(a, o.genero || 'Outros'),
       { txt: o.titulo, href: '#/o/' + o.id },
       { txt: 'Sobre esta edição' }
     ]);
@@ -374,7 +425,7 @@
     var h = decodeURIComponent(location.hash.replace(/^#\/?/, ''));
     var p = h.split('/').filter(Boolean);
     if (!p.length) return paginaCapa();
-    if (p[0] === 'a' && p[1]) return paginaAutor(p[1]);
+    if (p[0] === 'a' && p[1]) return p[2] ? paginaGenero(p[1], p[2]) : paginaAutor(p[1]);
     if (p[0] === 'o' && p[1]) {
       if (!p[2]) return paginaObra(p[1]);
       if (p[2] === 'sobre') return paginaSobre(p[1]);

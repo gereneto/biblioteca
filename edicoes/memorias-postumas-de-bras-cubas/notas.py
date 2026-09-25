@@ -17,7 +17,7 @@ APRESENTACAO = '''**Texto-base.** Este texto reproduz a terceira edição das _M
 
 **Correções.** Corrigiram-se só os erros tipográficos evidentes da edição de 1896 (lista abaixo). Nada mais foi emendado.
 
-**Ortografia.** A grafia foi atualizada pelo Acordo Ortográfico de 1990 (_Braz_ → Brás, _idéa_ → ideia, _elle_ → ele, _pae_ → pai). Só a grafia: o vocabulário, as formas e as construções do autor ficaram como estão — _cousa_, _dous_, _doudo_, _mor_, as mesóclises, a colocação dos pronomes, a pontuação, os travessões e as aspas angulares, os itálicos e as abreviaturas _S._ (São), _D._ (Dona) e _cap._ (capítulo). Nomes estrangeiros de uso corrente em português tomaram a forma atual (_Job_ → Jó, _Jacob_ → Jacó, _Madrid_ → Madri, _Bagdad_ → Bagdá, _Smyrna_ → Esmirna).
+**Ortografia.** A grafia foi atualizada pelo Acordo Ortográfico de 1990 (_Braz_ → Brás, _idéa_ → ideia, _elle_ → ele, _pae_ → pai). As formas antigas de palavras que continuam em uso passaram à forma atual (_cousa_ → coisa, _dous_ → dois, _doudo_ → doido, _subtil_ → sutil, _a mor parte_ → a maior parte). O vocabulário e as construções do autor ficaram como estão — as mesóclises, a colocação dos pronomes, a pontuação, os travessões e as aspas angulares, os itálicos e as abreviaturas _S._ (São), _D._ (Dona) e _cap._ (capítulo). Nomes estrangeiros de uso corrente em português tomaram a forma atual (_Job_ → Jó, _Jacob_ → Jacó, _Madrid_ → Madri, _Bagdad_ → Bagdá, _Smyrna_ → Esmirna).
 
 **Divisão.** O livro tem 160 capítulos curtos, numerados em romanos e titulados pelo autor, precedidos da dedicatória, do prólogo e da nota «Ao leitor». Cada um é uma página desta biblioteca.'''
 
@@ -54,7 +54,6 @@ FONTES = [
 # (trecho do texto final, leitura de outras edições, observação)
 MANTIDAS = [
     ('Prólogo da terceira edição', 'Prólogo da quarta edição (machadodeassis.net)', 'título da edição de 1896'),
-    ('a mor parte', 'a maior parte', '«mor», forma antiga de «maior», ainda registrada nos dicionários'),
     ('repotreou-se', 'repoltreou-se', 'assim em 1881 e em 1896'),
     ('o da vida e da morte', 'e o da morte', ''),
     ('destruíram-lhe a flor das graças', 'destruíam-lhe', ''),

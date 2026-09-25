@@ -28,7 +28,8 @@ As rotas usam `#`, de modo que qualquer hospedagem estática serve:
 | Rota                     | Página                                  |
 | ------------------------ | --------------------------------------- |
 | `#/`                     | capa: autores e "continuar a leitura"   |
-| `#/a/machado-de-assis`   | obras do autor                          |
+| `#/a/machado-de-assis`   | gêneros do autor                        |
+| `#/a/machado-de-assis/romances` | obras do gênero: ano, capítulos, palavras |
 | `#/o/dom-casmurro`       | folha de rosto e índice                 |
 | `#/o/dom-casmurro/12`    | 12ª parte (aqui, o capítulo XII)        |
 | `#/o/dom-casmurro/sobre` | notas sobre o texto desta edição        |
@@ -75,7 +76,7 @@ BIBLIOTECA.obra({
   ano: 1878,
   genero: 'Romance',
   divisao: { singular: 'capítulo', plural: 'capítulos' },
-  descricao: 'Uma frase sobre o livro, não sobre o enredo (opcional).',
+  descricao: 'Uma frase sobre o livro, na folha de rosto (opcional).',
   edicao: { apresentacao: `Notas sobre o texto (opcional).` },
   partes: [
     { n: 'I', titulo: '', texto: `Primeiro parágrafo.

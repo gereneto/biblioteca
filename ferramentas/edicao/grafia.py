@@ -113,3 +113,34 @@ def igualar_caixa(antiga, nova):
     if antiga[:1].islower() and nova[:1].isupper() and not antiga.isupper():
         return nova[0].lower() + nova[1:]
     return nova
+
+
+# ------------------------------------------------------------------ formas antigas de palavras atuais
+# Variantes que a língua abandonou (ou que só Portugal conserva) trocadas pela forma brasileira
+# atual. Não entram aqui palavras que continuam vivas no registro literário (mui, assaz,
+# outrossim), nem a sintaxe do autor (mesóclises, colocação dos pronomes, contrações como «lho»).
+FORMAS_ATUAIS = [
+    (r'cous(a|as|inha|inhas)', r'cois\1'),
+    (r'dous', 'dois'),
+    (r'doud(o|a|os|as|amente|ice|ices|ejar|ejava|ejavam|ivanas)', r'doid\1'),
+    (r'endoud(\w+)', r'endoid\1'),
+    (r'afout(o|a|os|as|eza|amente)', r'afoit\1'),
+    (r'subti(l|s|leza|lezas|lmente)', r'suti\1'),
+    (r'mor', 'maior'),                                   # «a mor parte» (capitão-mor fica: é outra palavra)
+    (r'contacto(s?)', r'contato\1'),
+    (r'estupefact(o|a|os|as)', r'estupefat\1'),
+    (r'erect(o|a|os|as)', r'eret\1'),
+]
+_FORMAS = [(re.compile(a + r'\Z'), b) for a, b in FORMAS_ATUAIS]
+
+
+def forma_atual(w):
+    """cousa -> coisa, Dous -> Dois; as demais palavras voltam iguais."""
+    baixa = w.lower()
+    for rx, sub in _FORMAS:
+        if rx.match(baixa):
+            nova = rx.sub(sub, baixa)
+            if w.isupper() and len(w) > 1:
+                return nova.upper()
+            return nova[0].upper() + nova[1:] if w[:1].isupper() else nova
+    return w
