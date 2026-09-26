@@ -118,3 +118,27 @@ def paragrafos_como(obra, base):
         if t.startswith('#'):
             out.append('¶')
     return obra_de_tokens(out)
+
+
+def estrutura_como(obra, base):
+    """Dá a um testemunho a divisão da base inteira — partes (#), títulos e parágrafos —,
+    ignorando a dele. Para textos em que a divisão não vem legível no OCR (diários, com
+    datas soltas no meio da página) ou vem diferente nas edições modernas."""
+    from .tokens import _mapeador
+    T = [t for t in achatar(obra) if t != '¶' and not t.startswith('#')]
+    B2, marcas = [], []
+    for t in achatar(base):
+        if t == '¶' or t.startswith('#'):
+            marcas.append((len(B2), t))
+        else:
+            B2.append(t)
+    mp = _mapeador(alinhar([chave(t) for t in B2], [chave(t) for t in T]))
+    onde = [(mp(p, True), k, t) for k, (p, t) in enumerate(marcas)]
+    onde.sort()
+    out, k = [], 0
+    for i, t in enumerate(T):
+        while k < len(onde) and onde[k][0] <= i:
+            out.append(onde[k][2]); k += 1
+        out.append(t)
+    out += [m[2] for m in onde[k:]]
+    return obra_de_tokens(out)

@@ -127,7 +127,7 @@ def _mdn():
 
 def transcricoes():
     pg = fontes.gutenberg(OBRA, 56737, [r'^(?P<t>ADVERTÊNCIA)$', r'^CAPITULO (?P<n>PRIMEIRO|[IVXLC]+)$'],
-                          inicio='ADVERTÊNCIA', fim='ÍNDICE')
+                          inicio='ADVERTÊNCIA', fim='ÍNDICE', trocar=[('V.-Ex.', 'V. Ex.')])
     pg = [p for p in pg if p['n'] != 'CXXI'] + [dict(CAP_CXXI, paras=list(CAP_CXXI['paras']))]
     mdn = _mdn()
     base = arrumar(pg)

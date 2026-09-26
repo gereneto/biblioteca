@@ -38,7 +38,7 @@ Acordo de 1990) · **MEC** Obra Completa, Nova Aguilar, 1994 (texto moderno).
 | 2 | _Memórias Póstumas de Brás Cubas_ | 1881, Tip. Nacional (antes na _Revista Brasileira_, 1880) | «3ª ed.» 1896, Garnier, revista, com prólogo (fac-símile BBM 7815, só OCR); «4ª ed.» 1899 (não digitalizada) | PG 54829 (1881) · WS (1881, parcial) · OCR de 1896 | MDN 5985 · MEC · Câmara | **publicado** (base 1896) |
 | 3 | _Quincas Borba_ | 1891, Garnier, com errata (antes em _A Estação_, 1886–1891) | 2ª ed. 1896, muito revista; 3ª ed. 1899, com prólogo (nenhuma digitalizada) | PG 55682 (1891) · WS (1891, parcial) · OCR BBM 5251 | MDN 8340 · MEC · Objetivo (= Aguilar) | **publicado** (1891 + lições da edição revista) |
 | 4 | _Esaú e Jacó_ | 1904, Garnier (única em vida) | — | PG 56737 (sem o cap. CXXI) · OCR BBM 4763 e 7817 (WS não revisado) | MDN 13998 · MEC · Objetivo | **publicado** |
-| 5 | _Memorial de Aires_ | 1908, Garnier | — | PG 55797 (1908) · WS (1908) | MDN 16866 · MEC | a fazer |
+| 5 | _Memorial de Aires_ | 1908, Garnier (única em vida) | — | PG 55797 (sem a advertência) · OCR BBM 4707 · OCR microfilme IA 3438833 (BBM 7842 é «nova edição» póstuma) | MDN 16866 · MEC · Objetivo | **publicado** |
 | 6 | _Iaiá Garcia_ | 1878, G. Vianna (antes em _O Cruzeiro_) | 2ª ed. 1898 | PG 67780 (reimpr. 1919) · WS (1878) | MDN 4304 · MEC | a fazer |
 | 7 | _Helena_ | 1876, Garnier (antes em _O Globo_) | 2ª ed. 1905, com advertência | PG 67162 (1876) · WS (1876) | MDN 2554 · MEC | a fazer |
 | 8 | _A Mão e a Luva_ | 1874, Gomes de Oliveira (antes em _O Globo_) | 2ª ed. 1907, com advertência | PG 53101 (reimpr. 1919 do texto de 1907) · WS (1874, incompleto) | MDN 1434 · MEC | a fazer |

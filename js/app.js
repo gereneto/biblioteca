@@ -147,6 +147,8 @@
   /* Rótulo de uma parte: "Capítulo XII" (numeral da obra) */
   function rotuloParte(obra, parte) {
     if (!parte.n) return String(parte.titulo || '').replace(/[_*]/g, '');   /* contos, poemas: o título */
+    /* diários: a data e o ano ("9 de janeiro, 1888") */
+    if (obra.divisao && obra.divisao.rotulo === 'titulo') return String(parte.titulo || '').replace(/[_*]/g, '') + ', ' + parte.n;
     var d = obra.divisao ? obra.divisao.singular : 'parte';
     return d.charAt(0).toUpperCase() + d.slice(1) + ' ' + parte.n;
   }
@@ -293,9 +295,12 @@
       '</header>' +
       '<p class="secao-titulo">' + esc(d.plural.charAt(0).toUpperCase() + d.plural.slice(1)) + '</p>' +
       '<ol class="indice">';
+    /* nos diários, o ano só aparece no índice quando muda */
+    var agrupa = o.divisao && o.divisao.rotulo === 'titulo';
     o.partes.forEach(function (p, i) {
+      var num = agrupa && i && o.partes[i - 1].n === p.n ? '' : p.n;
       html += '<li' + (pos === i + 1 ? ' class="atual"' : '') + '><a href="#/o/' + o.id + '/' + (i + 1) + '">' +
-        '<span class="num">' + esc(p.n) + '</span>' +
+        '<span class="num">' + esc(num) + '</span>' +
         '<span class="tit">' + (p.titulo ? inline(p.titulo) : '<span class="inc">' + incipit(p.texto, 60) + '</span>') + '</span>' +
         '</a></li>';
     });

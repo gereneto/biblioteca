@@ -90,6 +90,7 @@ def processar(obra, publicar=False):
         r['tipo'] = a[0]
     reg_aj = reg_pt + reg_aj
     out = montar.aspas_angulares(out)
+    out = ['—' if t == '-' else t for t in out]      # hífen solto é travessão
 
     partes = montar.partes(out, flags, getattr(dec, 'VERSOS', None), getattr(dec, 'TITULOS', None))
 
@@ -113,7 +114,7 @@ def processar(obra, publicar=False):
     print(len(partes), 'partes;', sum(len(p['paragrafos']) for p in partes), 'parágrafos')
 
     if publicar:
-        edicao = notas_da_edicao(notas, reg_em, reg_aj, partes, tradicao)
+        edicao = notas_da_edicao(notas, reg_em, reg_aj, partes, tradicao, config.META['divisao'].get('rotulo'))
         meta = config.META
         destino = os.path.join(RAIZ, 'conteudo', meta['autor'], meta['id'] + '.js')
         montar.publicar(destino, meta, partes, edicao, getattr(notas, 'COMENTARIO', ''))
@@ -123,32 +124,40 @@ def processar(obra, publicar=False):
         print('publicado:', destino)
 
 
-def notas_da_edicao(notas, reg_em, reg_aj, partes, tradicao=()):
-    rotulo = lambda p: p['n'] or p['titulo']         # partes sem número (prólogo...): pelo título
-    ordem = {rotulo(p): i for i, p in enumerate(partes)}
-    completo = {rotulo(p): ' '.join((x if isinstance(x, str) else ' '.join(x['verso'])) for x in p['paragrafos']) + ' ' + p['titulo']
-                for p in partes}
+def notas_da_edicao(notas, reg_em, reg_aj, partes, tradicao=(), rotulo_divisao=None):
+    def rotulo(p):
+        if rotulo_divisao == 'titulo' and p['n']:          # diários: «9 de janeiro, 1888»
+            return f"{p['titulo']}, {p['n']}"
+        return p['n'] or p['titulo']                       # partes sem número (prólogo...): pelo título
+    rotulos = [rotulo(p) for p in partes]
+    ordem = {r: i for i, r in enumerate(rotulos)}
+    completo = [' '.join((x if isinstance(x, str) else ' '.join(x['verso'])) for x in p['paragrafos']) + ' ' + p['titulo']
+                for p in partes]
 
     def onde(frase):
-        achou = [n for n, t in completo.items() if frase in t]
+        achou = [rotulos[i] for i, t in enumerate(completo) if frase in t]
         if not achou:
             raise SystemExit(f'trecho não encontrado no texto final: {frase!r}')
         return ', '.join(achou)
 
+    def cap(r):
+        i = r.get('i_parte')
+        return rotulos[i] if i is not None and 0 <= i < len(rotulos) else r['parte']
+
     sem_par = lambda x: x.replace(' ¶', '')
-    erros = [(r['parte'], sem_par(r['de']), sem_par(r['para'])) for r in reg_em if r['tipo'] == 'erro']
+    erros = [(cap(r), sem_par(r['de']), sem_par(r['para'])) for r in reg_em if r['tipo'] == 'erro']
     erros += list(getattr(notas, 'ERROS_ANTERIORES', []))
     erros.sort(key=lambda x: ordem.get(x[0], 9999))
     sem_cab = lambda x: ' '.join(t for t in x.split() if not t.startswith('#'))
-    trad = [(r['parte'], sem_par(r['de']), sem_par(r['para'])) for r in reg_em if r['tipo'] == 'edicao']
-    trad += [(r['parte'], sem_cab(sem_par(r['de'])), sem_cab(sem_par(r['para']))) for r in tradicao]
+    trad = [(cap(r), sem_par(r['de']), sem_par(r['para'])) for r in reg_em if r['tipo'] == 'edicao']
+    trad += [(cap(r), sem_cab(sem_par(r['de'])), sem_cab(sem_par(r['para']))) for r in tradicao]
     trad.sort(key=lambda x: ordem.get(x[0], 9999))
     pont = []
     for r in reg_aj:
         if r['tipo'] != 'pontuacao':
             continue
         juntar = lambda s: texto([t for t in s.split() if t != '¶' and not t.startswith('#')])
-        pont.append((r['parte'], juntar(f"{r['antes']} {r['de']} {r['depois']}"), juntar(f"{r['antes']} {r['para']} {r['depois']}")))
+        pont.append((cap(r), juntar(f"{r['antes']} {r['de']} {r['depois']}"), juntar(f"{r['antes']} {r['para']} {r['depois']}")))
     pont.sort(key=lambda x: ordem.get(x[0], 9999))
     mant = [{'cap': onde(fr), 'texto': fr, 'variante': v, 'obs': o} for fr, v, o in getattr(notas, 'MANTIDAS', [])]
     extra = {k: v for k, v in (('base', getattr(notas, 'BASE', None)), ('secoes', getattr(notas, 'SECOES', None))) if v}

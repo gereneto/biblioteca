@@ -33,6 +33,11 @@ def parte_em(E, i):
     return ' '.join(titulo)
 
 
+def parte_indice(E, i):
+    """Posição (0, 1, 2...) da parte em que está o token i."""
+    return sum(1 for t in E[:i] if t.startswith('#')) - 1
+
+
 def aplicar_emendas(E, italico, emendas):
     """emendas: [(tipo, busca, troca)] na grafia do texto-base. Devolve (E, italico, registro).
     Em trechos longos, a busca pode ser 'começo […] fim' (do começo, único, ao primeiro fim)."""
@@ -54,11 +59,17 @@ def aplicar_emendas(E, italico, emendas):
         else:
             b = _toks(busca)
             achados = localizar(E, b)
+            if not achados and len(localizar(E, t)) == 1:
+                # o confronto já chegou à forma corrigida: a emenda fica registrada (para as notas)
+                i = localizar(E, t)[0]
+                reg.append({'tipo': tipo, 'parte': parte_em(E, i), 'i_parte': parte_indice(E, i),
+                            'de': busca, 'para': troca})
+                continue
             if len(achados) != 1:
                 falhas.append(f'emenda {busca!r}: {len(achados)} ocorrências no texto-base')
                 continue
             i = achados[0]
-        reg.append({'tipo': tipo, 'parte': parte_em(E, i), 'de': busca, 'para': troca})
+        reg.append({'tipo': tipo, 'parte': parte_em(E, i), 'i_parte': parte_indice(E, i), 'de': busca, 'para': troca})
         E = E[:i] + t + E[i + len(b):]
         italico = italico[:i] + [italico[i]] * len(t) + italico[i + len(b):]
     if falhas:
@@ -165,7 +176,8 @@ def ajustes_finais(out, flags, ajustes):
         i = achados[0] + len(a)
         out = out[:i] + p + out[i + len(d):]
         flags = flags[:i] + [False] * len(p) + flags[i + len(d):]
-        reg.append({'parte': parte_em(out, i), 'antes': antes, 'de': de, 'para': para, 'depois': depois})
+        reg.append({'parte': parte_em(out, i), 'i_parte': parte_indice(out, i), 'antes': antes, 'de': de,
+                    'para': para, 'depois': depois})
     return out, flags, reg
 
 
@@ -251,7 +263,7 @@ def pontuacao_das_modernas(out, flags, modernas):
         i1 = idx[e - 1] + 1 if s < e else i0
         antes = ' '.join(t for t in out[max(0, i0 - 6):i0])
         depois = ' '.join(t for t in out[i1:i1 + 4])
-        reg.append({'tipo': 'pontuacao', 'parte': parte_em(out, i0), 'antes': antes,
+        reg.append({'tipo': 'pontuacao', 'parte': parte_em(out, i0), 'i_parte': parte_indice(out, i0), 'antes': antes,
                     'de': ' '.join(out[i0:i1]), 'para': ' '.join(novo), 'depois': depois})
         out = out[:i0] + list(novo) + out[i1:]
         flags = flags[:i0] + [False] * len(novo) + flags[i1:]

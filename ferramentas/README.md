@@ -39,6 +39,11 @@ As fontes baixadas e os relatórios ficam em `ferramentas/cache/<obra>/` (fora d
      `DESEMPATE_LEXICO = True` desempata, sem apoio moderno, pela leitura sem palavras
      inexistentes nas edições modernas (e compara o contexto tolerando a grafia antiga).
    - O itálico só é votado pelos testemunhos que o marcam (o OCR não marca).
+   - **Diários** (ex.: _Memorial de Aires_): `ocr.estrutura_como` projeta sobre OCRs e
+     edições modernas a divisão inteira da base (entradas, títulos, parágrafos);
+     `divisao: {..., 'rotulo': 'titulo'}` faz o site rotular «9 de janeiro, 1888» e mostrar
+     o ano só quando muda. No modo `DESEMPATE_LEXICO`, uma maioria de OCRs sem apoio
+     moderno perde para a transcrição humana (Gutenberg) quando as modernas a confirmam.
 3. **Intervenções** (`edicoes/<obra>/decisoes.py`, `EMENDAS`): erros tipográficos da
    edição-base (`erro`), lições da tradição posterior (`edicao`), erros das
    transcrições (`ocr`) e lições da edição-base conferidas no fac-símile que o confronto

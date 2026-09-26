@@ -1333,15 +1333,15 @@ A frase era boa, sonora, parecia conter a maior soma de verdade que há na terra
 
 Custódio foi recebido com a benevolência de outros dias e um pouco mais de interesse. Aires queria saber o que é que o entristecia.
 
-— Vim para contá-lo a V. - Ex.; é a tabuleta.
+— Vim para contá-lo a V. Ex.; é a tabuleta.
 
 — Que tabuleta?
 
-— Queira V. - Ex. ver por seus olhos, disse o confeiteiro, pedindo-lhe o favor de ir à janela.
+— Queira V. Ex. ver por seus olhos, disse o confeiteiro, pedindo-lhe o favor de ir à janela.
 
 — Não vejo nada.
 
-— Justamente, é isso mesmo. Tanto me aconselharam que fizesse reformar a tabuleta que afinal consenti, e fi-la tirar por dois empregados. A vizinhança veio para a rua assistir ao trabalho e parecia rir de mim. Já tinha falado a um pintor da rua da Assembleia; não ajustei o preço porque ele queria ver primeiro a obra. Ontem, à tarde, lá foi um caixeiro, e sabe V. - Ex. o que me mandou dizer o pintor? Que a tábua está velha, e precisa outra; a madeira não aguenta tinta. Lá fui às carreiras. Não pude convencê-lo de pintar na mesma madeira; mostrou-me que estava rachada e comida de bichos. Pois cá _de baixo_ não se via. Teimei que pintasse assim mesmo; respondeu-me que era artista e não faria obra que se estragasse logo.
+— Justamente, é isso mesmo. Tanto me aconselharam que fizesse reformar a tabuleta que afinal consenti, e fi-la tirar por dois empregados. A vizinhança veio para a rua assistir ao trabalho e parecia rir de mim. Já tinha falado a um pintor da rua da Assembleia; não ajustei o preço porque ele queria ver primeiro a obra. Ontem, à tarde, lá foi um caixeiro, e sabe V. Ex. o que me mandou dizer o pintor? Que a tábua está velha, e precisa outra; a madeira não aguenta tinta. Lá fui às carreiras. Não pude convencê-lo de pintar na mesma madeira; mostrou-me que estava rachada e comida de bichos. Pois cá _de baixo_ não se via. Teimei que pintasse assim mesmo; respondeu-me que era artista e não faria obra que se estragasse logo.
 
 — Pois reforme tudo. Pintura nova em madeira velha não vale nada. Agora verá que dura pelo resto da nossa vida.
 
@@ -1351,11 +1351,11 @@ Era tarde, a ordem fora expedida, a madeira devia estar comprada, serrada e preg
 
 Quaisquer que fossem as cores, eram tintas novas, tábuas novas, uma reforma que ele, mais por economia que por afeição, não quisera fazer; mas a afeição valia muito. Agora que ia trocar de tabuleta sentia perder algo do corpo, — coisa que outros do mesmo ou diverso ramo de negócio não compreenderiam, tal gosto acham em renovar as caras e fazer crescer com elas a nomeada. São naturezas. Aires ia pensando em escrever uma Filosofia das Tabuletas, na qual poria tais e outras observações, mas nunca deu começo à obra.
 
-— V. - Ex. há de me perdoar o incômodo que lhe trouxe, vindo contar-lhe isto, mas V. - Ex. é sempre tão bom comigo, fala-me com tanta amizade, que eu me atrevi... Perdoa-me, sim?
+— V. Ex. há de me perdoar o incômodo que lhe trouxe, vindo contar-lhe isto, mas V. Ex. é sempre tão bom comigo, fala-me com tanta amizade, que eu me atrevi... Perdoa-me, sim?
 
 — Sim, homem de Deus.
 
-— Conquanto V. - Ex. aprove a reforma da tabuleta, sentirá comigo a separação da outra, a minha amiga velha, que nunca me deixou, que eu, nas noites de luminárias, por S. Sebastião e outras, fazia aparecer aos olhos da gente. V. - Ex., quando se aposentou, veio achá-la no mesmo lugar em que a deixou por ocasião de ser nomeado. E tive alma para me separar dela!
+— Conquanto V. Ex. aprove a reforma da tabuleta, sentirá comigo a separação da outra, a minha amiga velha, que nunca me deixou, que eu, nas noites de luminárias, por S. Sebastião e outras, fazia aparecer aos olhos da gente. V. Ex., quando se aposentou, veio achá-la no mesmo lugar em que a deixou por ocasião de ser nomeado. E tive alma para me separar dela!
 
 — Está bom, lá vai; agora é receber a nova, e verá como daqui a pouco são amigos.
 

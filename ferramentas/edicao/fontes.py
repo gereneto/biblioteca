@@ -359,10 +359,12 @@ def ocr_por_linhas(texto, inicio, fim, cabecalho, lixo=(), titulo_seguinte=False
 
     for l in s.split('\n'):
         l = l.strip()
-        if not l or any(r.match(l) for r in rx_lixo) or sum(c.isalpha() for c in l) < 2:
+        if not l:
             continue
         m = rx_cab.match(l)
         sem = next((t for r, t in rx_sem if r.match(l)), None)
+        if not (m or sem) and (any(r.match(l) for r in rx_lixo) or sum(c.isalpha() for c in l) < 2):
+            continue
         if sem and not m and parte is not None and parte['titulo'] == sem:
             continue                                   # cabeço repetido da mesma parte
         if m or sem:

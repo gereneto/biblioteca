@@ -160,8 +160,16 @@ def estabelecer(transcricoes, base, modernas, correlacionados=(), ruidoso=None, 
     # não existem nas edições modernas (erros de digitação ou de OCR)
     lex = {esqueleto(t) for n in nomes_m for t in M[n].M if e_palavra(t)} if lexico else None
 
-    def desconhecidas(toks):
-        return sum(1 for t in toks if e_palavra(t) and esqueleto(t) not in lex) if lex else 0
+    def desconhecidas(toks, base_toks=()):
+        # número de palavras inexistentes; leituras de tamanho muito diferente do da base
+        # (lixo de OCR, cabeços de página) ficam fora do desempate
+        if not lex:
+            return 0
+        ps = [esqueleto(t) for t in toks if e_palavra(t)]
+        nb = sum(1 for t in base_toks if e_palavra(t))
+        if abs(len(ps) - nb) > 1:
+            return 10 ** 6
+        return sum(1 for p in ps if p not in lex)
 
     sitios = []
     # os pontos de divergência vêm só das transcrições; as modernas apenas dão apoio
@@ -187,12 +195,16 @@ def estabelecer(transcricoes, base, modernas, correlacionados=(), ruidoso=None, 
         if votos(maior) * 2 > votos(votantes):
             k_mai = _k(leit[maior[0]])
             escolha, por = k_mai, 'maioria (' + '='.join(maior) + ')'
+            rival = max((k for k in grupos if k != k_mai), key=lambda k: len(apoio[k]))
             if any(set(maior) <= c for c in corr):
-                rival = max((k for k in grupos if k != k_mai), key=lambda k: len(apoio[k]))
                 if len(apoio[rival]) > len(apoio[k_mai]):
                     escolha, por = rival, 'minoria com apoio moderno (' + '='.join(grupos[rival]) + ')'
+            elif lexico and not apoio[k_mai] and len(apoio[rival]) >= 2 and base in grupos[rival]:
+                # maioria sem apoio nenhum contra minoria que as modernas confirmam: os OCRs
+                # erram juntos onde o impresso é falho (letra quebrada, espaço apertado)
+                escolha, por = rival, 'minoria com apoio moderno (' + '='.join(grupos[rival]) + ')'
         else:
-            ordem = sorted(grupos, key=lambda k: (-len(apoio[k]), desconhecidas(leit[grupos[k][0]]),
+            ordem = sorted(grupos, key=lambda k: (-len(apoio[k]), desconhecidas(leit[grupos[k][0]], leit[base]),
                                                   min(nomes_t.index(n) for n in grupos[k])))
             escolha = ordem[0]
             por = 'sem maioria; ' + '='.join(grupos[escolha])
@@ -357,7 +369,8 @@ def adotar_modernas(E, modernas, folga=4):
         novo.extend(trecho)
         pos = i1
         reg.append({'antes': texto(E[max(0, i0 - 8):i0]), 'de': texto(E[i0:i1]), 'para': texto(trecho),
-                    'depois': texto(E[i1:i1 + 6]), 'i': i0, 'parte': _parte(E, i0)})
+                    'depois': texto(E[i1:i1 + 6]), 'i': i0, 'parte': _parte(E, i0),
+                    'i_parte': sum(1 for t in E[:i0] if t.startswith('#')) - 1})
     novo.extend(E[pos:])
     return novo, reg
 
