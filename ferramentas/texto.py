@@ -52,7 +52,8 @@ def processar(obra, publicar=False):
 
     # 1. texto-base
     E0, sitios = estabelecer.estabelecer(tr, config.BASE, md, getattr(config, 'CORRELACIONADOS', ()),
-                                         getattr(config, 'RUIDOSO', None))
+                                         getattr(config, 'RUIDOSO', None), getattr(config, 'UM_VOTO', False),
+                                         getattr(config, 'DESEMPATE_LEXICO', False))
     print('divergências entre transcrições:', len(sitios), dict(estabelecer.resumo(sitios)))
     ruidoso = getattr(config, 'RUIDOSO', None)
     revisoes = []
@@ -66,8 +67,10 @@ def processar(obra, publicar=False):
         revisoes += [dict(r, ruidoso='') for r in tradicao]
 
     # 2. itálico (o testemunho ruidoso não vota: o OCR não traz itálico)
-    E, ital = modernizar.italico_por_votacao(E0, {n: o for n, o in tr.items() if n != ruidoso},
-                                             md.get(config.REFERENCIAS[0][0]))
+    # só votam os testemunhos que marcam itálico (o OCR não marca; tem só sublinhados soltos)
+    marcas = {n: sum('_' in x for p in o for x in p['paras']) for n, o in tr.items()}
+    votam = {n: o for n, o in tr.items() if n != ruidoso and marcas[n] * 4 >= max(marcas.values())}
+    E, ital = modernizar.italico_por_votacao(E0, votam, md.get(config.REFERENCIAS[0][0]))
 
     # 3. intervenções no texto-base
     E, ital, reg_em = modernizar.aplicar_emendas(E, ital, dec.EMENDAS)

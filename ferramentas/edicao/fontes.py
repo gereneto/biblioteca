@@ -334,19 +334,22 @@ def _romano_ocr(s):
     return s
 
 
-def ocr_por_linhas(texto, inicio, fim, cabecalho, lixo=()):
+def ocr_por_linhas(texto, inicio, fim, cabecalho, lixo=(), titulo_seguinte=False, sem_numero=()):
     """Obra a partir do texto de um PDF com OCR em que cada parágrafo é (quase sempre) uma linha.
     cabecalho: regex com o grupo 'n' (número do capítulo, corrigido por _romano_ocr);
-    lixo: regex de linhas a descartar (cabeços, números de página). Junta os parágrafos
-    partidos pelas quebras de página e as palavras hifenizadas."""
+    lixo: regex de linhas a descartar (cabeços, números de página); titulo_seguinte: a linha
+    depois do cabeçalho é o título; sem_numero: [(regex, título)] de partes sem número
+    (advertência, prólogo). Junta os parágrafos partidos pelas quebras de página e as
+    palavras hifenizadas."""
     s = texto.replace('\f', '\n')
     s = re.sub(r'\xad\s*', '', s)
     s = s[s.index(inicio):]
     if fim:
         s = s[:s.rindex(fim)]
     rx_cab = re.compile(cabecalho)
+    rx_sem = [(re.compile(r), t) for r, t in sem_numero]
     rx_lixo = [re.compile(x) for x in lixo] + [re.compile(r'^[\divxlcIVXLC.]{1,6}$')]
-    obra, parte, par = [], None, ''
+    obra, parte, par, espera = [], None, '', False
 
     def fecha():
         nonlocal par
@@ -359,10 +362,18 @@ def ocr_por_linhas(texto, inicio, fim, cabecalho, lixo=()):
         if not l or any(r.match(l) for r in rx_lixo) or sum(c.isalpha() for c in l) < 2:
             continue
         m = rx_cab.match(l)
-        if m:
+        sem = next((t for r, t in rx_sem if r.match(l)), None)
+        if sem and not m and parte is not None and parte['titulo'] == sem:
+            continue                                   # cabeço repetido da mesma parte
+        if m or sem:
             fecha()
-            parte = {'n': _romano_ocr(m.group('n')), 'titulo': '', 'paras': []}
+            parte = {'n': _romano_ocr(m.group('n')) if m else '', 'titulo': sem or '', 'paras': []}
             obra.append(parte)
+            espera = bool(m) and titulo_seguinte
+            continue
+        if espera:
+            parte['titulo'] = l
+            espera = False
             continue
         if par.endswith('-') and not par.endswith('--'):
             par = par[:-1] + l

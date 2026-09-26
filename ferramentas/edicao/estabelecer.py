@@ -21,7 +21,7 @@ import bisect
 from collections import Counter
 from difflib import SequenceMatcher
 
-from .grafia import chave, mesma_palavra
+from .grafia import chave, esqueleto, mesma_palavra
 from .tokens import LACUNA, achatar, alinhar, divergencias, e_palavra, mapear, texto
 
 IGNORAR = ('_', '*')
@@ -69,9 +69,10 @@ class _Moderna:
     """Texto moderno com índice de chaves, para achar a leitura correspondente pelo contexto
     (o alinhamento sozinho erra quando há mais de um modo de alinhar o trecho)."""
 
-    def __init__(self, toks, ops):
+    def __init__(self, toks, ops, flexivel=False):
         self.M = toks
         self.ops = ops
+        self.flexivel = flexivel          # contexto tolerante a grafia (monarchica ~ monárquica)
         self.idx = [i for i, t in enumerate(toks) if t not in IGNORAR]
         self.chaves = [chave(toks[i]) for i in self.idx]
 
@@ -86,8 +87,8 @@ class _Moderna:
             if not antes or not depois:
                 continue
             na, nd = len(antes), len(depois)
-            fins = [p + na for p in range(lo, hi - na + 1) if self.chaves[p:p + na] == antes]
-            inis = [q for q in range(lo, hi - nd + 1) if self.chaves[q:q + nd] == depois]
+            fins = [p + na for p in range(lo, hi - na + 1) if self._casa(self.chaves[p:p + na], antes)]
+            inis = [q for q in range(lo, hi - nd + 1) if self._casa(self.chaves[q:q + nd], depois)]
             pares = [(p, q) for p in fins for q in inis if q >= p]
             if pares:
                 p, q = min(pares, key=lambda x: abs(x[0] - fa) + abs(x[1] - fb))
@@ -95,6 +96,14 @@ class _Moderna:
                 iq = self.idx[q] if q < len(self.idx) else len(self.M)
                 return self.M[ip:iq]
         return self.M[a:b]
+
+
+    def _casa(self, a, b):
+        if a == b:
+            return True
+        if not self.flexivel or len(a) != len(b):
+            return False
+        return all(x == y or (len(x) > 3 and SequenceMatcher(None, x, y).ratio() >= 0.75) for x, y in zip(a, b))
 
 
 def _aspas(anteriores, trecho):
@@ -133,7 +142,7 @@ def _aponta(r, esc, km):
     return dr <= max(3, 0.6 * len(' '.join(km))) and dr * 2 < de     # trechos curtos
 
 
-def estabelecer(transcricoes, base, modernas, correlacionados=(), ruidoso=None):
+def estabelecer(transcricoes, base, modernas, correlacionados=(), ruidoso=None, um_voto=False, lexico=False):
     """transcricoes/modernas: dict nome -> obra. Devolve (tokens, sítios)."""
     nomes_t = [base] + [n for n in transcricoes if n != base]
     T = {n: achatar(transcricoes[n]) for n in nomes_t}
@@ -145,8 +154,14 @@ def estabelecer(transcricoes, base, modernas, correlacionados=(), ruidoso=None):
     M = {}
     for n in nomes_m:
         toks = achatar(modernas[n])
-        M[n] = _Moderna(toks, alinhar(B, toks, chave=chave))
+        M[n] = _Moderna(toks, alinhar(B, toks, chave=chave), flexivel=lexico)
     corr = [set(c) for c in correlacionados]
+    # desempate pelo léxico: sem maioria nem apoio, vence a leitura com menos palavras que
+    # não existem nas edições modernas (erros de digitação ou de OCR)
+    lex = {esqueleto(t) for n in nomes_m for t in M[n].M if e_palavra(t)} if lexico else None
+
+    def desconhecidas(toks):
+        return sum(1 for t in toks if e_palavra(t) and esqueleto(t) not in lex) if lex else 0
 
     sitios = []
     # os pontos de divergência vêm só das transcrições; as modernas apenas dão apoio
@@ -163,8 +178,13 @@ def estabelecer(transcricoes, base, modernas, correlacionados=(), ruidoso=None):
         for n in votantes:
             grupos.setdefault(_k(leit[n]), []).append(n)
         apoio = {k: [m for m in nomes_m if _k(mods[m]) == k] for k in grupos}
-        maior = max(grupos.values(), key=len)
-        if len(maior) * 2 > len(votantes):
+        if um_voto:        # testemunhos aparentados valem um voto só
+            def votos(ns):
+                return len({min((i for i, c in enumerate(corr) if n in c), default=n) for n in ns})
+        else:
+            votos = len
+        maior = max(grupos.values(), key=votos)
+        if votos(maior) * 2 > votos(votantes):
             k_mai = _k(leit[maior[0]])
             escolha, por = k_mai, 'maioria (' + '='.join(maior) + ')'
             if any(set(maior) <= c for c in corr):
@@ -172,7 +192,8 @@ def estabelecer(transcricoes, base, modernas, correlacionados=(), ruidoso=None):
                 if len(apoio[rival]) > len(apoio[k_mai]):
                     escolha, por = rival, 'minoria com apoio moderno (' + '='.join(grupos[rival]) + ')'
         else:
-            ordem = sorted(grupos, key=lambda k: (-len(apoio[k]), min(nomes_t.index(n) for n in grupos[k])))
+            ordem = sorted(grupos, key=lambda k: (-len(apoio[k]), desconhecidas(leit[grupos[k][0]]),
+                                                  min(nomes_t.index(n) for n in grupos[k])))
             escolha = ordem[0]
             por = 'sem maioria; ' + '='.join(grupos[escolha])
         escolha_tokens = leit[grupos[escolha][0]]

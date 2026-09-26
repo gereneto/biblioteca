@@ -36,28 +36,33 @@ def parte_em(E, i):
 def aplicar_emendas(E, italico, emendas):
     """emendas: [(tipo, busca, troca)] na grafia do texto-base. Devolve (E, italico, registro).
     Em trechos longos, a busca pode ser 'começo […] fim' (do começo, único, ao primeiro fim)."""
-    reg = []
+    reg, falhas = [], []
     for tipo, busca, troca in emendas:
         t = _toks(troca)
         if '[…]' in busca:
             ini, fim = (_toks(x) for x in busca.split('[…]'))
             achados = localizar(E, ini)
             if len(achados) != 1:
-                raise SystemExit(f'emenda {busca!r}: começo com {len(achados)} ocorrências no texto-base')
+                falhas.append(f'emenda {busca!r}: começo com {len(achados)} ocorrências no texto-base')
+                continue
             i = achados[0]
             fins = [k for k in localizar(E[i:], fim)]
             if not fins:
-                raise SystemExit(f'emenda {busca!r}: fim não encontrado')
+                falhas.append(f'emenda {busca!r}: fim não encontrado')
+                continue
             b = E[i:i + fins[0] + len(fim)]
         else:
             b = _toks(busca)
             achados = localizar(E, b)
             if len(achados) != 1:
-                raise SystemExit(f'emenda {busca!r}: {len(achados)} ocorrências no texto-base')
+                falhas.append(f'emenda {busca!r}: {len(achados)} ocorrências no texto-base')
+                continue
             i = achados[0]
         reg.append({'tipo': tipo, 'parte': parte_em(E, i), 'de': busca, 'para': troca})
         E = E[:i] + t + E[i + len(b):]
         italico = italico[:i] + [italico[i]] * len(t) + italico[i + len(b):]
+    if falhas:
+        raise SystemExit('\n'.join(falhas))
     return E, italico, reg
 
 

@@ -90,3 +90,31 @@ def limpar(ocr, guias, lexico_extra=()):
     for i, t in enumerate(T):
         novo.extend(trocas.get(i, [t]))
     return obra_de_tokens(novo), sum(1 for v in trocas.values() if v)
+
+
+def paragrafos_como(obra, base):
+    """Dá ao OCR as quebras de parágrafo da base: o OCR junta falas de diálogo e parágrafos
+    partidos pela página, e dois OCRs juntos venceriam a base no voto."""
+    from .tokens import _mapeador
+    T = [t for t in achatar(obra) if t != '¶']
+    B = achatar(base)
+    B2, quebras = [], []
+    for t in B:
+        if t == '¶':
+            quebras.append(len(B2))
+        else:
+            B2.append(t)
+    mp = _mapeador(alinhar([chave(t) for t in B2], [chave(t) for t in T]))
+    em = sorted({mp(q, True) for q in quebras})
+    out, k = [], 0
+    for i, t in enumerate(T):
+        while k < len(em) and em[k] <= i:
+            if not out or out[-1] != '¶':
+                out.append('¶')
+            k += 1
+        if t.startswith('#') and (not out or out[-1] != '¶'):
+            out.append('¶')
+        out.append(t)
+        if t.startswith('#'):
+            out.append('¶')
+    return obra_de_tokens(out)

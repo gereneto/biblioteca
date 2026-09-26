@@ -33,6 +33,12 @@ As fontes baixadas e os relatórios ficam em `ferramentas/cache/<obra>/` (fora d
      contra o texto em palavras (não só em grafia ou abreviatura), vale a leitura delas; o
      mesmo para a pontuação (sem aspas nem hífens). Cada troca vai para a página «Sobre
      esta edição».
+   - **Vários OCRs do mesmo impresso** (ex.: _Esaú e Jacó_, dois exemplares da Brasiliana):
+     `ocr.paragrafos_como` dá a eles os parágrafos da base (o OCR junta falas de diálogo);
+     `CORRELACIONADOS` + `UM_VOTO = True` fazem os OCRs aparentados valerem um voto;
+     `DESEMPATE_LEXICO = True` desempata, sem apoio moderno, pela leitura sem palavras
+     inexistentes nas edições modernas (e compara o contexto tolerando a grafia antiga).
+   - O itálico só é votado pelos testemunhos que o marcam (o OCR não marca).
 3. **Intervenções** (`edicoes/<obra>/decisoes.py`, `EMENDAS`): erros tipográficos da
    edição-base (`erro`), lições da tradição posterior (`edicao`), erros das
    transcrições (`ocr`) e lições da edição-base conferidas no fac-símile que o confronto

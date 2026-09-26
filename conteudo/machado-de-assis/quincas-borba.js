@@ -3027,7 +3027,7 @@ Aqui o major chorou, mas suspendeu de repente as lágrimas. A filha, comovida, s
 Despediu-se. D. Tonica, depois de ir até o patamar, sem chegar à frente por causa dos sapatos, foi à janela para vê-lo sair.` },
     { n: "CXXXII", titulo: "", texto: `Logo que Rubião dobrou a esquina da rua das Mangueiras, D. Tonica entrou e foi ao pai, que se estendera no canapé, para reler o velho _Saint-Clair das ilhas ou os desterrados da ilha da Barra_. Foi o primeiro romance que conheceu; o exemplar tinha mais de vinte anos; era toda a biblioteca do pai e da filha. Siqueira abriu o primeiro volume, e deitou os olhos ao começo do cap. II, que já trazia de cor. Achava-lhe agora um sabor particular, por motivo dos seus recentes desgostos: «Enchei bem os vossos copos, exclamou Saint-Clair, e bebamos de uma vez; eis o brinde que vos proponho. À saúde dos bons e valentes oprimidos, e ao castigo dos seus opressores. Todos acompanharam Saint-Clair, e foi de roda a saúde.»
 
-— Sabe de uma coisa, papai? Papai compra amanhã latas de conserva, ervilha, peixe, etc., e ficam guardadas. No dia em que ele aparecer para jantar, põe-se no fogo, é só aquecer, e daremos um jantarzinho melhor.
+— Sabe de uma coisa, papai? Papai compra amanhã latas de conserva, _ervilha_, peixe, etc., e ficam guardadas. No dia em que ele aparecer para jantar, põe-se no fogo, é só aquecer, e daremos um jantarzinho melhor.
 
 — Mas eu só tenho o dinheiro do teu vestido.
 
@@ -3187,7 +3187,7 @@ Lucien cumprimentou o dono da casa; este, porém, não viu a cortesia, como não
 O barbeiro relanceou os olhos pelo gabinete, onde fazia principal figura a secretária, e sobre ela os dois bustos de Napoleão e Luís Napoleão. Relativamente a este último, havia, ainda, pendentes da parede, uma gravura ou litografia representando a _Batalha de Solferino_, e um retrato da imperatriz Eugênia.
 
 Rubião tinha nos pés um par de chinelas de damasco, bordadas a ouro; na cabeça, um gorro com borla de seda preta. Na boca, um riso azul claro.` },
-    { n: "CXLVI", titulo: "", texto: `— Senhor...
+    { n: "CXLVI", titulo: "", texto: `— _Senhor_...
 
 — Uhm! repetiu Quincas Borba, de pé nos joelhos do senhor.
 
@@ -3195,7 +3195,7 @@ Rubião voltou a si e deu com o barbeiro. Conhecia-o por tê-lo visto ultimament
 
 — Sossega! cala a boca! disse-lhe Rubião; e o cachorro foi, de orelha baixa, meter-se por trás da cesta de papéis. Durante esse tempo, Lucien desembrulhava os seus aparelhos.
 
-— O senhor vai perder uma bela barba — dizia ele em francês —. Conheço pessoas que fizeram a mesma coisa, mas para servir a alguma dama. Tenho sido confidente de homens respeitáveis...
+— O senhor vai perder uma bela barba — dizia ele em francês —. Conheço pessoas _que_ fizeram a mesma coisa, mas para servir a alguma dama. Tenho sido confidente _de_ homens respeitáveis...
 
 — Justamente! interrompeu Rubião.
 
@@ -3646,7 +3646,7 @@ Teófilo apertou-lhe a mão agradecido.
 
 Calou-se. Depois de longa pausa, ergueu-se e foi ao gabinete de trabalho, que ficava ao pé do quarto; a mulher acompanhou-o.
 
-Era já escuro, acendeu o bico de gás, e circulou pelo gabinete os olhos velados de melancolia. Havia ali quatro largas estantes cheias de livros, de relatórios, de orçamentos, de balanços do Tesouro. A secretária estava em ordem. Três armários altos, sem portas, guardavam os manuscritos, notas, lembranças, cálculos, apontamentos, tudo empilhado e rotulado metodicamente; — _créditos extraordinários,_ — _créditos suplementares,_ — _créditos de guerra_ — _créditos de marinha,_ — _empréstimo de_ 1868, — _estradas de ferro,_ — _dívida interna,_ — _exercício de_ 61-62, — _de_ 62-63, — _de_ 63-64, etc. Era ali que trabalhava de manhã e de noite, somando, calculando, recolhendo os elementos dos seus discursos e pareceres, porque era membro de três comissões parlamentares, e trabalhava geralmente por si e pelos seis colegas; estes ouviam e assinavam. Um deles, quando os pareceres eram extensos, assinava-os sem ouvir.
+Era já escuro, acendeu o bico de gás, e circulou pelo gabinete os olhos velados de melancolia. Havia ali quatro largas estantes cheias de livros, de relatórios, de orçamentos, de balanços do Tesouro. A secretária estava em ordem. Três armários altos, sem portas, guardavam os manuscritos, notas, lembranças, cálculos, apontamentos, tudo empilhado e rotulado metodicamente; — _créditos extraordinários,_ — _créditos suplementares,_ — _créditos de guerra_ — _créditos de marinha,_ — _empréstimo de_ 1868, — _estradas de ferro,_ — _dívida interna,_ — _exercício de_ 61-62, — _de_ 62-63, — _de_ 63-64, _etc_. Era ali que trabalhava de manhã e de noite, somando, calculando, recolhendo os elementos dos seus discursos e pareceres, porque era membro de três comissões parlamentares, e trabalhava geralmente por si e pelos seis colegas; estes ouviam e assinavam. Um deles, quando os pareceres eram extensos, assinava-os sem ouvir.
 
 — Homem, você é mestre e basta, dizia-lhe, dê cá a pena.
 
