@@ -20,9 +20,14 @@ As decisões de cada livro ficam em `edicoes/<obra>/`.
 ## Escopo e ordem de trabalho
 
 Só romances, contos e poesia (sem teatro, traduções nem obra dispersa). Primeiro os
-romances, da maturidade para a juventude; depois as coletâneas de contos; por fim, a poesia.
-Das coletâneas que misturam gêneros (_Páginas Recolhidas_, _Relíquias de Casa Velha_),
-entram só os contos.
+romances da maturidade; depois as coletâneas de contos; por fim, a poesia. Os romances da
+juventude (6 a 9) ficam para depois dos contos. Das coletâneas que misturam gêneros
+(_Páginas Recolhidas_, _Relíquias de Casa Velha_), entram só os contos.
+
+Nas coletâneas, cada conto fica acessível por si, com a indicação da primeira publicação
+(jornal ou revista, data, pseudônimo); o livro aparece como grupo na página dos contos, e a
+navegação passa de um conto ao seguinte na ordem do livro. As notas do autor vão no fim do
+conto a que se referem.
 
 ## Bibliografia
 
@@ -39,16 +44,16 @@ Acordo de 1990) · **MEC** Obra Completa, Nova Aguilar, 1994 (texto moderno).
 | 3 | _Quincas Borba_ | 1891, Garnier, com errata (antes em _A Estação_, 1886–1891) | 2ª ed. 1896, muito revista; 3ª ed. 1899, com prólogo (nenhuma digitalizada) | PG 55682 (1891) · WS (1891, parcial) · OCR BBM 5251 | MDN 8340 · MEC · Objetivo (= Aguilar) | **publicado** (1891 + lições da edição revista) |
 | 4 | _Esaú e Jacó_ | 1904, Garnier (única em vida) | — | PG 56737 (sem o cap. CXXI) · OCR BBM 4763 e 7817 (WS não revisado) | MDN 13998 · MEC · Objetivo | **publicado** |
 | 5 | _Memorial de Aires_ | 1908, Garnier (única em vida) | — | PG 55797 (sem a advertência) · OCR BBM 4707 · OCR microfilme IA 3438833 (BBM 7842 é «nova edição» póstuma) | MDN 16866 · MEC · Objetivo | **publicado** |
-| 6 | _Iaiá Garcia_ | 1878, G. Vianna (antes em _O Cruzeiro_) | 2ª ed. 1898 | PG 67780 (reimpr. 1919) · WS (1878) | MDN 4304 · MEC | a fazer |
-| 7 | _Helena_ | 1876, Garnier (antes em _O Globo_) | 2ª ed. 1905, com advertência | PG 67162 (1876) · WS (1876) | MDN 2554 · MEC | a fazer |
-| 8 | _A Mão e a Luva_ | 1874, Gomes de Oliveira (antes em _O Globo_) | 2ª ed. 1907, com advertência | PG 53101 (reimpr. 1919 do texto de 1907) · WS (1874, incompleto) | MDN 1434 · MEC | a fazer |
-| 9 | _Ressurreição_ | 1872, Garnier | 2ª ed. 1905, com advertência | WS (1872) | MDN 2 · MEC | a fazer |
+| 6 | _Iaiá Garcia_ | 1878, G. Vianna (antes em _O Cruzeiro_) | 2ª ed. 1898 | PG 67780 (reimpr. 1919) · WS (1878) | MDN 4304 · MEC | depois dos contos |
+| 7 | _Helena_ | 1876, Garnier (antes em _O Globo_) | 2ª ed. 1905, com advertência | PG 67162 (1876) · WS (1876) | MDN 2554 · MEC | depois dos contos |
+| 8 | _A Mão e a Luva_ | 1874, Gomes de Oliveira (antes em _O Globo_) | 2ª ed. 1907, com advertência | PG 53101 (reimpr. 1919 do texto de 1907) · WS (1874, incompleto) | MDN 1434 · MEC | depois dos contos |
+| 9 | _Ressurreição_ | 1872, Garnier | 2ª ed. 1905, com advertência | WS (1872) | MDN 2 · MEC | depois dos contos |
 
 ### Contos
 
 | # | Obra | 1ª edição | Transcrições | Moderno | Situação |
 |---|------|-----------|--------------|---------|----------|
-| 10 | _Papéis Avulsos_ | 1882, Lombaerts | PG 57001 (1882) · WS (1882) | MDN (conto a conto) · MEC | a fazer |
+| 10 | _Papéis Avulsos_ | 1882, Lombaerts (única em vida) | PG 57001 (1882) · OCR BBM 4774 | MDN (conto a conto) · MEC · Objetivo | **publicado** (12 contos e a advertência) |
 | 11 | _Histórias sem Data_ | 1884, Garnier | PG 33056 · WS (1884) | MDN · MEC | a fazer |
 | 12 | _Várias Histórias_ | 1896, Laemmert | WS (1896) | MDN · MEC | a fazer |
 | 13 | _Páginas Recolhidas_ | 1899, Garnier | WS (1899) | MDN (contos) · MEC | a fazer |

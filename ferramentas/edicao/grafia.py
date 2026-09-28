@@ -131,6 +131,7 @@ FORMAS_ATUAIS = [
     (r'estupefact(o|a|os|as)', r'estupefat\1'),
     (r'erect(o|a|os|as)', r'eret\1'),
     (r'súbdit(o|a|os|as)', r'súdit\1'),
+    (r'noute(s?)', r'noite\1'),
 ]
 _FORMAS = [(re.compile(a + r'\Z'), b) for a, b in FORMAS_ATUAIS]
 

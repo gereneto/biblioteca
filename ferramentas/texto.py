@@ -13,6 +13,7 @@ import importlib.util
 import json
 import os
 import pickle
+import re
 import sys
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -113,7 +114,9 @@ def processar(obra, publicar=False):
                  'emendas': reg_em, 'ajustes': reg_aj, 'partes': partes}, open(cache(obra, 'resultado.pkl'), 'wb'))
     print(len(partes), 'partes;', sum(len(p['paragrafos']) for p in partes), 'parágrafos')
 
-    if publicar:
+    if publicar and getattr(config, 'CONTOS', None):
+        publicar_coletanea(config, notas, partes, reg_em, reg_aj, tradicao)
+    elif publicar:
         edicao = notas_da_edicao(notas, reg_em, reg_aj, partes, tradicao, config.META['divisao'].get('rotulo'))
         meta = config.META
         destino = os.path.join(RAIZ, 'conteudo', meta['autor'], meta['id'] + '.js')
@@ -124,21 +127,26 @@ def processar(obra, publicar=False):
         print('publicado:', destino)
 
 
-def notas_da_edicao(notas, reg_em, reg_aj, partes, tradicao=(), rotulo_divisao=None):
+def notas_da_edicao(notas, reg_em, reg_aj, partes, tradicao=(), rotulo_divisao=None, indices=None, rotulos=None):
+    """indices: só as partes dessa lista (um conto de uma coletânea); rotulos: nome de cada parte."""
     def rotulo(p):
         if rotulo_divisao == 'titulo' and p['n']:          # diários: «9 de janeiro, 1888»
             return f"{p['titulo']}, {p['n']}"
         return p['n'] or p['titulo']                       # partes sem número (prólogo...): pelo título
-    rotulos = [rotulo(p) for p in partes]
+    rotulos = rotulos or [rotulo(p) for p in partes]
+    dentro = set(range(len(partes)) if indices is None else indices)
+    reg_em = [r for r in reg_em if r.get('i_parte') in dentro or indices is None]
+    reg_aj = [r for r in reg_aj if r.get('i_parte') in dentro or indices is None]
+    tradicao = [r for r in tradicao if r.get('i_parte') in dentro or indices is None]
     ordem = {r: i for i, r in enumerate(rotulos)}
     completo = [' '.join((x if isinstance(x, str) else ' '.join(x['verso'])) for x in p['paragrafos']) + ' ' + p['titulo']
                 for p in partes]
 
     def onde(frase):
-        achou = [rotulos[i] for i, t in enumerate(completo) if frase in t]
-        if not achou:
+        """Partes (dentro da seleção) em que o trecho aparece; o rótulo pode ser vazio."""
+        if not any(frase in t for t in completo):
             raise SystemExit(f'trecho não encontrado no texto final: {frase!r}')
-        return ', '.join(achou)
+        return [i for i, t in enumerate(completo) if frase in t and i in dentro]
 
     def cap(r):
         i = r.get('i_parte')
@@ -159,7 +167,8 @@ def notas_da_edicao(notas, reg_em, reg_aj, partes, tradicao=(), rotulo_divisao=N
         juntar = lambda s: texto([t for t in s.split() if t != '¶' and not t.startswith('#')])
         pont.append((cap(r), juntar(f"{r['antes']} {r['de']} {r['depois']}"), juntar(f"{r['antes']} {r['para']} {r['depois']}")))
     pont.sort(key=lambda x: ordem.get(x[0], 9999))
-    mant = [{'cap': onde(fr), 'texto': fr, 'variante': v, 'obs': o} for fr, v, o in getattr(notas, 'MANTIDAS', [])]
+    mant = [{'cap': ', '.join(rotulos[i] for i in lugar if rotulos[i]), 'texto': fr, 'variante': v, 'obs': o}
+            for fr, v, o in getattr(notas, 'MANTIDAS', []) for lugar in [onde(fr)] if lugar]
     extra = {k: v for k, v in (('base', getattr(notas, 'BASE', None)), ('secoes', getattr(notas, 'SECOES', None))) if v}
     return {
         **extra,
@@ -170,6 +179,66 @@ def notas_da_edicao(notas, reg_em, reg_aj, partes, tradicao=(), rotulo_divisao=N
         'pontuacao': [{'cap': c, 'de': d, 'para': p} for c, d, p in pont],
         'mantidas': mant,
     }
+
+
+def publicar_coletanea(config, notas, partes, reg_em, reg_aj, tradicao):
+    """Coletânea de contos: cada unidade (parte sem número e seus capítulos) vira uma obra; as
+    notas do autor (unidade config.NOTAS, no fim) voltam cada uma ao seu conto."""
+    unidades = []
+    for i, p in enumerate(partes):
+        if p['n'] == '' or not unidades:
+            unidades.append([i])
+        else:
+            unidades[-1].append(i)
+    i_notas = next(k for k, u in enumerate(unidades) if partes[u[0]]['titulo'] == config.NOTAS)
+    notas_partes = unidades[i_notas][1:]
+    unidades = unidades[:i_notas]
+    contos = config.CONTOS
+    if len(unidades) != len(contos):
+        raise SystemExit(f'{len(unidades)} unidades no texto, {len(contos)} em config.CONTOS')
+    chave = lambda s: re.sub(r'\W', '', s).lower()
+    nota_de = {}
+    for i in notas_partes:
+        # o título da nota pode vir com o rótulo das edições modernas («Nota F — ...»)
+        c = max((c for c in contos if chave(c['titulo']) in chave(partes[i]['titulo'])),
+                key=lambda c: len(chave(c['titulo'])), default=None)
+        if c is None:
+            raise SystemExit(f'nota sem conto: {partes[i]["titulo"]!r}')
+        nota_de[c['id']] = i
+    meta_col = config.META
+    itens = []
+    for ordem, (c, u) in enumerate(zip(contos, unidades), 1):
+        inicio, caps = partes[u[0]], u[1:]
+        if caps:
+            obra = [dict(partes[i], paragrafos=list(partes[i]['paragrafos'])) for i in caps]
+            if inicio['paragrafos']:
+                obra[0]['paragrafos'] = inicio['paragrafos'] + obra[0]['paragrafos']
+        else:
+            obra = [{'n': '', 'titulo': '', 'paragrafos': list(inicio['paragrafos'])}]
+        indices = list(u)
+        if c['id'] in nota_de:
+            k = nota_de[c['id']]
+            obra[-1]['paragrafos'] += ['¤ ' + (x if isinstance(x, str) else '\n'.join('| ' + l for l in x['verso']))
+                                       for x in partes[k]['paragrafos']]
+            indices.append(k)
+        # lugar de cada correção na página «Sobre»: capítulo, nota do autor ou nada (conto sem capítulos)
+        rotulos = [('Nota do autor' if j in notas_partes else p['n']) for j, p in enumerate(partes)]
+        edicao = notas_da_edicao(notas, reg_em, reg_aj, partes, tradicao, indices=indices, rotulos=rotulos)
+        meta = {
+            'id': c['id'], 'autor': meta_col['autor'], 'titulo': c['titulo'], 'subtitulo': c.get('subtitulo'),
+            'ano': meta_col['ano'], 'genero': meta_col['genero'],
+            'divisao': meta_col['divisao'],
+            'coletanea': {'id': meta_col['id'], 'titulo': meta_col['titulo'], 'ano': meta_col['ano'], 'ordem': ordem},
+            'publicacao': c.get('publicacao'), 'paratexto': c.get('paratexto'),
+        }
+        itens.append((meta, obra, edicao))
+    destino = os.path.join(RAIZ, 'conteudo', meta_col['autor'], meta_col['id'] + '.js')
+    montar.publicar_varios(destino, itens, getattr(notas, 'COMENTARIO', ''))
+    rel_js = f"conteudo/{meta_col['autor']}/{meta_col['id']}.js"
+    if montar.registrar_no_index(os.path.join(RAIZ, 'index.html'), rel_js):
+        print('acrescentado ao index.html:', rel_js)
+    print('notas do autor:', {c: partes[i]['titulo'] for c, i in nota_de.items()})
+    print('publicado:', destino, f'({len(itens)} textos)')
 
 
 if __name__ == '__main__':

@@ -44,6 +44,12 @@ As fontes baixadas e os relatórios ficam em `ferramentas/cache/<obra>/` (fora d
      `divisao: {..., 'rotulo': 'titulo'}` faz o site rotular «9 de janeiro, 1888» e mostrar
      o ano só quando muda. No modo `DESEMPATE_LEXICO`, uma maioria de OCRs sem apoio
      moderno perde para a transcrição humana (Gutenberg) quando as modernas a confirmam.
+   - **Coletâneas de contos** (ex.: _Papéis Avulsos_): o livro é estabelecido inteiro e
+     publicado conto a conto (`CONTOS` no config: id, título, subtítulo, primeira
+     publicação). No fluxo, cada conto começa numa parte sem número, e seus capítulos são
+     as partes numeradas seguintes; as notas do autor vão numa unidade final (`NOTAS`) e,
+     na publicação, cada uma volta ao fim do seu conto (parágrafos `¤ `). Tudo sai num só
+     `conteudo/<autor>/<livro>.js`, com um `BIBLIOTECA.obra` por conto.
 3. **Intervenções** (`edicoes/<obra>/decisoes.py`, `EMENDAS`): erros tipográficos da
    edição-base (`erro`), lições da tradição posterior (`edicao`), erros das
    transcrições (`ocr`) e lições da edição-base conferidas no fac-símile que o confronto
@@ -51,8 +57,9 @@ As fontes baixadas e os relatórios ficam em `ferramentas/cache/<obra>/` (fora d
    `'começo […] fim'`.
 4. **Grafia** (`edicao/modernizar.py`): cada palavra recebe a grafia da edição de
    referência (o machadodeassis.net já segue o Acordo de 1990; o Aguilar é convertido),
-   só quando é a mesma palavra. Formas do autor que a língua ainda registra (_cousa_,
-   _dous_) não mudam. O que sobra vai para `sem_par.tsv` e se resolve em `MANUAL`.
+   só quando é a mesma palavra. Depois, `grafia.FORMAS_ATUAIS` troca as formas antigas de
+   palavras atuais (_cousa_ → coisa, _dous_ → dois, _noute_ → noite). O que sobra vai para
+   `sem_par.tsv` e se resolve em `MANUAL`.
 5. **Ajustes** (`AJUSTES`): pontuação atestada por toda a tradição posterior, acentos
    de locuções, leituras restauradas.
 6. **Itálico** por votação entre as transcrições; **versos** e títulos em `VERSOS` e

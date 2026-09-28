@@ -23,6 +23,8 @@ def _preparar(toks, flags):
             t = '...'
         if t in ('o', 'º', '°') and i >= 2 and toks[i - 1] == '.' and toks[i - 2].isdigit():
             t2[-1] = '.º'; continue          # vers. 6.º
+        if t in ('º', '°') and i >= 1 and toks[i - 1].isdigit():
+            t2[-1] = t2[-1] + '.º'; continue  # 4° -> 4.º
         t2.append(t); f2.append(flags[i])
     return t2, f2
 
@@ -137,18 +139,16 @@ def texto_da_parte(p):
     return '\n\n'.join(blocos)
 
 
-def publicar(destino, meta, obra, edicao, comentario=''):
-    """Escreve o arquivo de conteúdo da obra. meta: id, autor, titulo, ano, genero, divisao, descricao."""
-    linhas = []
-    if comentario:
-        linhas.append('/* ' + comentario.strip() + '\n*/')
-    linhas.append('BIBLIOTECA.obra({')
-    for k in ('id', 'autor', 'titulo', 'ano', 'genero'):
-        if meta.get(k) is not None:
+def _linhas_obra(meta, obra, edicao):
+    """Chamada BIBLIOTECA.obra({...}) de uma obra."""
+    linhas = ['BIBLIOTECA.obra({']
+    for k in ('id', 'autor', 'titulo', 'subtitulo', 'ano', 'genero'):
+        if meta.get(k) is not None and meta.get(k) != '':
             linhas.append(f'  {k}: {json.dumps(meta[k], ensure_ascii=False)},')
     linhas.append(f"  divisao: {json.dumps(meta['divisao'], ensure_ascii=False)},")
-    if meta.get('descricao'):
-        linhas.append(f"  descricao: {json.dumps(meta['descricao'], ensure_ascii=False)},")
+    for k in ('descricao', 'coletanea', 'publicacao', 'paratexto'):     # contos: livro e 1ª publicação
+        if meta.get(k):
+            linhas.append(f'  {k}: {json.dumps(meta[k], ensure_ascii=False)},')
     linhas.append('  edicao: {')
     for k in ('base', 'secoes'):                 # rótulos próprios da obra (opcionais)
         if edicao.get(k):
@@ -169,9 +169,24 @@ def publicar(destino, meta, obra, edicao, comentario=''):
             _tpl(texto_da_parte(p)), ',' if i < len(obra) - 1 else ''))
     linhas.append('  ]')
     linhas.append('});')
+    return linhas
+
+
+def publicar_varios(destino, itens, comentario=''):
+    """Escreve num arquivo só várias obras (os contos de uma coletânea): itens = [(meta, obra, edicao)]."""
+    linhas = []
+    if comentario:
+        linhas.append('/* ' + comentario.strip() + '\n*/')
+    for meta, obra, edicao in itens:
+        linhas += _linhas_obra(meta, obra, edicao)
     os.makedirs(os.path.dirname(destino), exist_ok=True)
     with open(destino, 'w', encoding='utf-8', newline='\n') as f:
         f.write('\n'.join(linhas) + '\n')
+
+
+def publicar(destino, meta, obra, edicao, comentario=''):
+    """Escreve o arquivo de conteúdo da obra. meta: id, autor, titulo, ano, genero, divisao, descricao."""
+    publicar_varios(destino, [(meta, obra, edicao)], comentario)
 
 
 def registrar_no_index(index_html, caminho_rel):

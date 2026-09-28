@@ -197,6 +197,31 @@ main { padding: 0 1rem 5rem; }
 }
 .cabeca-parte h1 { font-weight: 400; font-size: clamp(1.55rem, 5vw, 2rem); line-height: 1.25; margin: 0; }
 
+/* contos: coletânea, título, subtítulo e primeira publicação no alto do texto */
+.coletanea-parte {
+  font-family: var(--sans); font-size: .72rem; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--tinta-tenue); margin: 0 0 .7rem;
+}
+.coletanea-parte em, .secao-titulo em { font-style: normal; }
+.cabeca-parte h1.titulo-conto { font-size: clamp(1.9rem, 6vw, 2.5rem); line-height: 1.15; }
+.subtitulo-obra { font-style: italic; color: var(--tinta-suave); margin: .45rem auto 0; max-width: 28rem; line-height: 1.4; }
+.publicacao { font-family: var(--sans); font-size: .78rem; line-height: 1.5; color: var(--tinta-tenue); margin: .9rem auto 0; max-width: 28rem; }
+.cabeca-parte.conto .num-parte { margin-top: 2.2rem; }
+.cabeca-parte h2 { font-weight: 400; font-size: clamp(1.25rem, 4vw, 1.5rem); line-height: 1.3; margin: 0; }
+.cartao.paratexto { background: transparent; box-shadow: none; padding: .7rem 1.25rem; }
+.cartao.paratexto .cartao-titulo { font-size: 1.05rem; color: var(--tinta-suave); }
+
+/* notas do autor, no fim do texto */
+.nota-do-autor {
+  margin: 2.6rem 0 0; padding: 1rem 0 0; border-top: 1px solid var(--linha);
+  font-size: .9em; color: var(--tinta-suave);
+}
+.nota-do-autor .rotulo {
+  font-family: var(--sans); font-size: .7rem; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--tinta-tenue); text-indent: 0; margin: 0 0 .6rem;
+}
+.leitura .texto .nota-do-autor p:nth-child(2) { text-indent: 0; }
+
 .texto p { margin: 0; text-indent: 1.5em; hyphens: auto; -webkit-hyphens: auto; text-align: justify; }
 .texto p + p { margin-top: .15em; }
 .texto p.continua { text-indent: 0; }

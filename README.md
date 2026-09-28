@@ -30,9 +30,11 @@ As rotas usam `#`, de modo que qualquer hospedagem estática serve:
 | `#/`                     | capa: autores e "continuar a leitura"   |
 | `#/a/machado-de-assis`   | gêneros do autor                        |
 | `#/a/machado-de-assis/romances` | obras do gênero: ano, capítulos, palavras |
+| `#/a/machado-de-assis/contos` | contos, agrupados por livro, com a 1ª publicação |
 | `#/o/dom-casmurro`       | folha de rosto e índice                 |
 | `#/o/dom-casmurro/12`    | 12ª parte (aqui, o capítulo XII)        |
 | `#/o/dom-casmurro/sobre` | notas sobre o texto desta edição        |
+| `#/o/o-alienista/1`      | um conto (cada conto é uma obra; o livro vai em `coletanea`) |
 
 Na leitura, as setas ← e → do teclado passam de uma parte para outra. O site guarda no
 navegador a última parte lida de cada obra, o tema (claro ou escuro) e o tamanho da letra.
@@ -102,6 +104,22 @@ Segundo parágrafo.` },
 - Um parágrafo que começa com minúscula (continuação da frase depois de uma citação em
   verso) aparece sem recuo.
 - Partes sem título mostram no índice o começo do texto.
+- Parágrafos que começam com `¤ ` são notas do autor: aparecem juntos, no fim da parte.
+
+### Contos
+
+Cada conto é uma obra própria (`BIBLIOTECA.obra`), com três campos a mais:
+
+```js
+  subtitulo: 'Diálogo',                                   // opcional
+  coletanea: { id: 'papeis-avulsos', titulo: 'Papéis Avulsos', ano: 1882, ordem: 3 },
+  publicacao: '_Gazeta de Notícias_, 18 de dezembro de 1881',
+  paratexto: true,                                        // advertência, prefácio (opcional)
+```
+
+A página do gênero agrupa os contos pelo livro, na ordem de `ordem`; um conto sem capítulos
+(uma só parte, sem número nem título) abre direto no texto, e as setas levam ao conto
+anterior ou seguinte do mesmo livro.
 
 ## O texto de _Dom Casmurro_
 
@@ -110,8 +128,8 @@ transcrições independentes (Projeto Gutenberg, Wikisource e J. Stolfi/Unicamp)
 fac-símile como árbitro. Foram corrigidos os erros tipográficos evidentes e adotadas as
 lições da 2ª edição (1900, a última em vida do autor) atestadas por toda a tradição
 posterior. A ortografia foi atualizada pelo Acordo de 1990 sem tocar no vocabulário, nas
-formas e na sintaxe do autor (mesóclises, _cousa_, _dous_, colocação pronominal,
-pontuação). A lista completa das intervenções está na página
+formas e na sintaxe do autor (mesóclises, colocação pronominal, pontuação); só as formas
+antigas de palavras atuais passaram à de hoje (_cousa_ → coisa, _dous_ → dois). A lista completa das intervenções está na página
 **Sobre esta edição** do próprio site (`#/o/dom-casmurro/sobre`).
 
 ## Publicar
