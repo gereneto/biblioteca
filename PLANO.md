@@ -69,3 +69,7 @@ Acordo de 1990) · **MEC** Obra Completa, Nova Aguilar, 1994 (texto moderno).
 | 18 | _Crisálidas_ (versão original) | 1864, Garnier | WS (1864) | MEC | a fazer |
 | 19 | _Falenas_ (versão original) | 1870, Garnier | WS (1870) | MEC | a fazer |
 | 20 | _Americanas_ (versão original) | 1875, Garnier | WS (1875) | MEC | a fazer |
+
+Enquanto a poesia não passa por este processo, o site traz 26 poemas de Machado (de
+_Crisálidas_, _Falenas_, _Americanas_, _Ocidentais_ e _Relíquias de Casa Velha_) tirados do
+corpus do Versificador, com a poesia dos outros autores (ver `ferramentas/poesia.py`).

@@ -7,21 +7,86 @@
      #/                      capa: autores e "continuar a leitura"
      #/a/<autor>             gêneros em que o autor tem obras
      #/a/<autor>/<genero>    obras do autor nesse gênero (romances, contos, poesia...)
+     #/a/<autor>/poesia/<forma>  poemas de uma forma (sonetos, apólogos...), por livro
      #/o/<obra>              folha de rosto e índice da obra
      #/o/<obra>/<n>          parte n (1, 2, 3...) da obra
      #/o/<obra>/sobre        notas sobre o texto desta edição
+
+   Poemas: cada poema é uma obra. O índice (conteudo/poesia.js) chega com o site; o texto
+   de cada autor (conteudo/<autor>/poesia.js) só é carregado quando um poema dele é aberto.
+
+   Traduções: uma parte com "original" é lida em modo bilíngue — dois botões independentes
+   mostram o original (à esquerda) e a tradução (à direita), lado a lado quando os dois estão
+   ligados; em tela estreita, um de cada vez.
    --------------------------------------------------------------- */
 
 (function () {
   'use strict';
 
-  var dados = { autores: [], obras: [] };
+  var dados = { autores: [], obras: [], porId: {} };
+
+  function registrar(o) {
+    dados.obras.push(o);
+    dados.porId[o.id] = o;
+  }
 
   /* API usada pelos arquivos de conteúdo (carregados depois deste script) */
   window.BIBLIOTECA = {
     autor: function (a) { dados.autores.push(a); },
-    obra:  function (o) { dados.obras.push(o); }
+    obra:  registrar,
+    /* índice de poesia de um autor: livros e poemas (sem o texto) */
+    poemas: function (pac) {
+      pac.poemas.forEach(function (p, k) {
+        var l = p.livro >= 0 ? pac.livros[p.livro] : null;
+        registrar({
+          id: p.id, autor: pac.autor, titulo: p.titulo, genero: 'Poesia', poema: true,
+          forma: p.forma, n: p.n || '', secao: p.secao || '', subtitulo: p.subtitulo || '',
+          ano: p.ano || (l && l.ano) || null, versos: p.versos, lingua: p.lingua || '',
+          traducao: p.traducao || null,
+          coletanea: l ? { id: pac.autor + '/' + l.id, titulo: l.titulo, ano: l.ano || '', ordem: k, seq: p.livro } : null,
+          ordem: k,
+          divisao: { singular: 'parte', plural: 'partes' },
+          partes: (p.partes || [{}]).map(function (x) { return { n: '', titulo: x.titulo || '' }; }),
+          arquivo: pac.arquivo
+        });
+      });
+    },
+    /* texto dos poemas de um autor (arquivo carregado sob demanda) */
+    textos: function (mapa) {
+      Object.keys(mapa).forEach(function (id) {
+        var o = dados.porId[id], e = mapa[id];
+        if (!o) return;
+        e.t.forEach(function (t, i) {
+          if (!o.partes[i]) o.partes[i] = { n: '', titulo: '' };
+          o.partes[i].texto = t;
+          if (e.o) o.partes[i].original = e.o[i];
+        });
+        if (e.e) o.edicao = e.e;
+        o.carregada = true;
+      });
+    }
   };
+
+  /* Carrega (uma vez) o arquivo com o texto de uma obra; cb(true) quando pronto, cb(false) se falhar.
+     Usa <script>, que funciona também abrindo o index.html direto do disco. */
+  var pendentes = {};
+  function carregar(o, cb) {
+    if (!o.arquivo || o.carregada) return cb(true);
+    var arq = o.arquivo;
+    if (pendentes[arq]) { pendentes[arq].push(cb); return; }
+    pendentes[arq] = [cb];
+    var s = document.createElement('script');
+    function fim(ok) {
+      var l = pendentes[arq] || [];
+      delete pendentes[arq];
+      if (!ok) s.remove();
+      l.forEach(function (f) { f(ok && !!o.carregada); });
+    }
+    s.src = arq;
+    s.onload = function () { fim(true); };
+    s.onerror = function () { fim(false); };
+    document.head.appendChild(s);
+  }
 
   var CHAVE_TEMA  = 'biblioteca:tema';
   var CHAVE_FONTE = 'biblioteca:fonte';
@@ -73,6 +138,94 @@
     }).join('\n');
   }
 
+  /* ----------------------------- poemas e textos em paralelo ----------------------------- */
+
+  /* Poema -> blocos: estrofes ({versos: [...]}) e marcas ({marca, valor}); "sep" diz se o bloco
+     vem depois de uma linha em branco (uma fala colada à estrofe não abre espaço).
+     Um verso por linha, estrofes separadas por linha em branco, marcas em linhas "::chave valor". */
+  function blocosPoema(texto) {
+    var blocos = [], estrofe = null, branco = true;
+    String(texto || '').split('\n').forEach(function (l) {
+      if (!l.trim()) { estrofe = null; branco = true; return; }
+      var m = /^::(\w+)\s?(.*)$/.exec(l);
+      if (m) { blocos.push({ marca: m[1], valor: m[2].trim(), sep: branco }); estrofe = null; branco = false; return; }
+      if (!estrofe) { estrofe = { versos: [], sep: branco }; blocos.push(estrofe); }
+      estrofe.versos.push(l);
+      branco = false;
+    });
+    return blocos;
+  }
+
+  var SEPARADORES = { 'filete': '<span class="fio"></span>', 'fio horizontal': '<span class="fio"></span>',
+    'linha de pontos': '. . . . . . . . . . .' };
+  function htmlMarca(b) {
+    var v = b.valor;
+    switch (b.marca) {
+      case 'epigrafe': return v.split(/\s+\/\s+/).map(inline).join('<br>');
+      case 'separador': return SEPARADORES[v] || esc(v || '*');
+      case 'lacuna': return '. . . . . . . . . . .';
+      case 'pagina': return '';
+      default: return inline(v);
+    }
+  }
+
+  /* Linhas do texto em paralelo: cada linha é um verso, uma marca ou um parágrafo.
+     Com dois textos, as linhas se casam estrofe com estrofe e verso com verso (poema) ou
+     parágrafo com parágrafo (prosa); o que sobra de um lado fica vazio do outro. */
+  /* blocos -> [{sep, linhas: [{cls, html}]}] */
+  function linhasPoema(texto) {
+    return blocosPoema(texto).map(function (b) {
+      if (b.marca) return { sep: b.sep, linhas: [{ cls: 'm m-' + b.marca, html: htmlMarca(b) }] };
+      return { sep: b.sep, linhas: b.versos.map(function (v) { return { cls: 'v', html: inline(v) }; }) };
+    });
+  }
+  function linhasProsa(texto) {
+    var todos = String(texto || '').trim().split(/\n\s*\n/).filter(Boolean);
+    var corpo = todos.filter(function (b) { return !/^¤ /.test(b); });
+    var notas = todos.filter(function (b) { return /^¤ /.test(b); });
+    var linhas = corpo.map(function (b) { return { sep: false, linhas: [{ cls: 'p', html: paragrafos([b]) }] }; });
+    if (notas.length) {
+      linhas.push({ sep: false, linhas: [{ cls: 'p nota-do-autor', html: '<p class="rotulo">' + (notas.length > 1 ? 'Notas do autor' : 'Nota do autor') + '</p>' +
+        paragrafos(notas.map(function (b) { return b.replace(/^¤ /, ''); })) }] });
+    }
+    return linhas;
+  }
+
+  /* HTML da grade: células .orig e .trad alternadas, com data-i comum a cada par (âncora da rolagem).
+     "ini" marca o começo de estrofe ou de bloco, nas duas células do par, para que a linha
+     tenha a mesma altura dos dois lados. */
+  function grade(ladoTrad, ladoOrig, lingua) {
+    var n = Math.max(ladoTrad.length, ladoOrig ? ladoOrig.length : 0), html = '', i = 0;
+    for (var b = 0; b < n; b++) {
+      var bt = ladoTrad[b] || { linhas: [] }, bo = ladoOrig ? ladoOrig[b] || { linhas: [] } : { linhas: [] };
+      var m = Math.max(bt.linhas.length, bo.linhas.length);
+      var sep = b > 0 && (bt.sep || bo.sep) ? ' ini' : '';
+      for (var j = 0; j < m; j++, i++) {
+        var ini = j === 0 ? sep : '';
+        if (ladoOrig) html += celula('orig', bo.linhas[j], ini, i, lingua);
+        html += celula('trad', bt.linhas[j], ini, i, '');
+      }
+    }
+    return html;
+  }
+  function celula(lado, l, ini, i, lingua) {
+    if (!l) return '<div class="' + lado + ' vazio' + ini + '" data-i="' + i + '"></div>';
+    return '<div class="' + lado + ' ' + l.cls + ini + '" data-i="' + i + '"' + (lingua ? ' lang="' + lingua + '"' : '') + '>' + l.html + '</div>';
+  }
+
+  /* Texto de uma parte: poema ou prosa, com ou sem original ao lado */
+  function textoParte(o, p) {
+    var poema = !!o.poema;
+    var linhas = poema ? linhasPoema : linhasProsa;
+    var orig = p.original !== undefined && p.original !== null;
+    var lingua = orig && o.traducao ? o.traducao.codigo || '' : '';
+    var cls = 'paralelo ' + (poema ? 'poema' : 'prosa');
+    var attr = o.lingua && !orig ? ' lang="' + esc(o.lingua) + '"' : '';
+    if (!orig && !poema) return '<div class="texto">' + blocos(p.texto) + '</div>';
+    return '<div class="texto"><div class="' + cls + '"' + attr + '>' +
+      grade(linhas(p.texto), orig ? linhas(p.original) : null, lingua) + '</div></div>';
+  }
+
   function incipit(texto, limite) {
     var t = String(texto).replace(/^\|\s?/gm, '').replace(/[_*]/g, '').replace(/\s+/g, ' ').trim();
     if (t.length <= limite) return esc(t);
@@ -116,9 +269,14 @@
   }
   function milhar(n) { return n.toLocaleString('pt-BR'); }
 
-  /* "1899 · 148 capítulos · 66.998 palavras"; num conto: "13 capítulos · 18.034 palavras" */
+  /* "1899 · 148 capítulos · 66.998 palavras"; num conto: "13 capítulos · 18.034 palavras";
+     num poema: "5 partes · 2.001 versos" */
   function fichaObra(o) {
     var d = o.divisao || { singular: 'parte', plural: 'partes' };
+    if (o.poema) {
+      return [o.partes.length > 1 ? plural(o.partes.length, d.singular, d.plural) : '',
+        o.versos === 1 ? '1 verso' : milhar(o.versos) + ' versos'].filter(Boolean).join(' · ');
+    }
     if (o.coletanea) {
       return [o.partes.length > 1 ? plural(numeradas(o), d.singular, d.plural) : '',
         milhar(palavras(o)) + ' palavras'].filter(Boolean).join(' · ');
@@ -129,8 +287,8 @@
 
   /* ----------------------------- contos em coletânea ----------------------------- */
 
-  /* um conto sem capítulos abre direto no texto */
-  function linkObra(o) { return '#/o/' + o.id + (o.coletanea && o.partes.length === 1 ? '/1' : ''); }
+  /* um conto sem capítulos (ou um poema sem partes) abre direto no texto */
+  function linkObra(o) { return '#/o/' + o.id + ((o.coletanea || o.poema) && o.partes.length === 1 ? '/1' : ''); }
   function nomeColetanea(o) { return o.coletanea.titulo + (o.coletanea.ano ? ' (' + o.coletanea.ano + ')' : ''); }
   function textoPublicacao(o) { return o.publicacao ? 'Primeira publicação: ' + o.publicacao : ''; }
   /* textos da mesma coletânea, na ordem do livro */
@@ -145,21 +303,75 @@
     return Object.keys(vistos).length;
   }
   var TEXTOS = { 'Contos': ['conto', 'contos'], 'Poesia': ['poema', 'poemas'] };
-  /* [{titulo, ano, obras}]: obras avulsas num grupo sem título, coletâneas pelo ano */
+  /* [{titulo, ano, obras}]: obras avulsas num grupo sem título, coletâneas pelo ano;
+     poemas: livros na ordem de publicação do autor (seq), os avulsos por último */
   function porColetanea(obras) {
     var grupos = [], idx = {};
     obras.forEach(function (o) {
       var k = o.coletanea ? o.coletanea.id : '';
       if (!(k in idx)) {
         idx[k] = grupos.length;
-        grupos.push({ titulo: o.coletanea ? o.coletanea.titulo : '', ano: o.coletanea ? o.coletanea.ano : o.ano, obras: [] });
+        grupos.push({ titulo: o.coletanea ? o.coletanea.titulo : '', ano: o.coletanea ? o.coletanea.ano : o.ano,
+          seq: o.poema ? (o.coletanea ? o.coletanea.seq : 1e6) : null, obras: [] });
       }
       grupos[idx[k]].obras.push(o);
     });
     grupos.forEach(function (g) {
-      g.obras.sort(function (a, b) { return a.coletanea && b.coletanea ? a.coletanea.ordem - b.coletanea.ordem : 0; });
+      g.obras.sort(function (a, b) {
+        if (a.poema && b.poema) return a.ordem - b.ordem;
+        return a.coletanea && b.coletanea ? a.coletanea.ordem - b.coletanea.ordem : 0;
+      });
     });
-    return grupos.sort(function (a, b) { return (a.ano || 0) - (b.ano || 0); });
+    return grupos.sort(function (a, b) {
+      if (a.seq !== null && b.seq !== null) return a.seq - b.seq;
+      return (a.ano || 0) - (b.ano || 0);
+    });
+  }
+
+  /* ----------------------------- poesia: pastas por forma ----------------------------- */
+
+  var FORMAS = [
+    { id: 'sonetos', nome: 'Sonetos' },
+    { id: 'apologos', nome: 'Apólogos' },
+    { id: 'liras', nome: 'Liras' },
+    { id: 'odes', nome: 'Odes' },
+    { id: 'verso-livre', nome: 'Verso livre' },
+    { id: 'outras', nome: 'Outras formas' }
+  ];
+  function acharForma(id) { return FORMAS.filter(function (f) { return f.id === id; })[0] || null; }
+  /* pastas com poemas do autor: [{forma, obras}] na ordem de FORMAS */
+  function pastasDe(obras) {
+    return FORMAS.map(function (f) {
+      return { forma: f, obras: obras.filter(function (o) { return (o.forma || 'outras') === f.id; }) };
+    }).filter(function (x) { return x.obras.length; });
+  }
+  function poesiaDe(autorId) {
+    return dados.obras.filter(function (o) { return o.autor === autorId && o.genero === 'Poesia'; });
+  }
+  /* autor só de poesia: a página do autor mostra direto as pastas */
+  function soPoesia(autorId) {
+    var g = generosDe(autorId);
+    return g.length === 1 && g[0].genero === 'Poesia';
+  }
+  function hrefPoesia(a) { return '#/a/' + a.id + (soPoesia(a.id) ? '' : '/poesia'); }
+  function hrefPasta(a, forma) { return '#/a/' + a.id + '/poesia/' + forma; }
+  /* trilha até a pasta de um poema: Autor › (Poesia ›) Sonetos */
+  function trilhaPasta(a, o) {
+    var f = acharForma(o.forma || 'outras'), itens = [{ txt: a.nome, href: '#/a/' + a.id }];
+    if (!soPoesia(a.id)) itens.push({ txt: 'Poesia', href: '#/a/' + a.id + '/poesia' });
+    if (pastasDe(poesiaDe(a.id)).length > 1) itens.push({ txt: f.nome, href: hrefPasta(a, f.id) });
+    return itens;
+  }
+  /* índice da pasta a que o poema pertence (ou da poesia do autor, se só há uma pasta) */
+  function hrefIndicePoema(a, o) {
+    return pastasDe(poesiaDe(a.id)).length > 1 ? hrefPasta(a, o.forma || 'outras') : hrefPoesia(a);
+  }
+  /* poemas da mesma pasta, na ordem da lista (livro a livro): para "Anterior" e "Seguinte" */
+  function vizinhosPoema(o) {
+    var lista = [];
+    porColetanea(poesiaDe(o.autor).filter(function (x) { return (x.forma || 'outras') === (o.forma || 'outras'); }))
+      .forEach(function (g) { lista = lista.concat(g.obras); });
+    return lista;
   }
 
   /* ----------------------------- consultas ----------------------------- */
@@ -169,8 +381,7 @@
     return null;
   }
   function acharObra(id) {
-    for (var i = 0; i < dados.obras.length; i++) if (dados.obras[i].id === id) return dados.obras[i];
-    return null;
+    return Object.prototype.hasOwnProperty.call(dados.porId, id) ? dados.porId[id] : null;
   }
   function obrasDe(autorId) {
     return dados.obras.filter(function (o) { return o.autor === autorId; })
@@ -241,7 +452,14 @@
     progresso.firstChild.style.width = (Math.max(0, Math.min(1, frac)) * 100).toFixed(2) + '%';
   }
 
+  /* obra da página de leitura anterior: a escolha de original/tradução só dura enquanto se passa
+     de uma parte a outra da mesma obra; ao abrir o texto de novo, volta a tradução sozinha */
+  var obraNaTela = null, obraAnterior = null;
+
   function render(html, titulo) {
+    obraAnterior = obraNaTela;
+    obraNaTela = null;
+    document.getElementById('idiomas').hidden = true;   /* a página bilíngue a mostra de novo */
     app.innerHTML = html;
     document.title = titulo ? titulo + ' · Biblioteca' : 'Biblioteca';
     window.scrollTo(0, 0);
@@ -270,9 +488,13 @@
     html += '<p class="secao-titulo">Autores</p>';
     autoresOrdenados().forEach(function (a) {
       var obras = obrasDe(a.id);
+      var prosa = obras.filter(function (o) { return !o.poema; }), versos = obras.length - prosa.length;
+      /* "6 obras · 26 poemas"; num poeta, só os poemas */
+      var conta = [prosa.length ? plural(livros(prosa), 'obra', 'obras') : '',
+        versos ? plural(versos, 'poema', 'poemas') : ''].filter(Boolean).join(' · ') || '0 obras';
       html += '<a class="cartao" href="#/a/' + a.id + '">' +
         '<span class="cartao-titulo">' + esc(a.nome) + '</span>' +
-        '<span class="cartao-meta">' + esc(a.vida || '') + (a.vida ? ' · ' : '') + plural(livros(obras), 'obra', 'obras') + '</span>' +
+        '<span class="cartao-meta">' + esc(a.vida || '') + (a.vida ? ' · ' : '') + conta + '</span>' +
         (obras.length ? '<span class="cartao-texto">' + generosDe(a.id).map(function (x) { return esc(nomeGenero(x.genero)); }).join(' · ') + '</span>' : '') +
         '</a>';
     });
@@ -288,12 +510,70 @@
       '</header>';
   }
 
-  /* Página do autor: escolha do gênero */
+  /* Poesia do autor: uma pasta por forma (sonetos, apólogos...); com uma pasta só, a lista */
+  function htmlPastas(a, obras) {
+    var pastas = pastasDe(obras);
+    if (pastas.length === 1) return htmlListaPoemas(pastas[0].obras);
+    var html = '<p class="secao-titulo">Formas</p>';
+    pastas.forEach(function (x) {
+      var titulos = [];
+      porColetanea(x.obras).forEach(function (g) { if (g.titulo && titulos.indexOf(g.titulo) < 0) titulos.push(g.titulo); });
+      html += '<a class="cartao pasta" href="' + hrefPasta(a, x.forma.id) + '">' +
+        '<span class="cartao-titulo">' + esc(x.forma.nome) + '</span>' +
+        '<span class="cartao-meta">' + plural(x.obras.length, 'poema', 'poemas') + '</span>' +
+        (titulos.length ? '<span class="cartao-texto">' + titulos.map(function (t) { return '<em>' + esc(t) + '</em>'; }).join(', ') + '</span>' : '') +
+        '</a>';
+    });
+    return html;
+  }
+
+  /* Lista de poemas, livro a livro: número no livro (quando há) e título */
+  function htmlListaPoemas(obras) {
+    var grupos = porColetanea(obras), html = '';
+    grupos.forEach(function (g) {
+      var titulo = g.titulo || (grupos.length > 1 ? 'Avulsos' : '');
+      if (titulo) html += '<p class="secao-titulo">' + (g.titulo ? '<em>' + esc(titulo) + '</em>' : esc(titulo)) + (g.ano ? ' · ' + g.ano : '') + '</p>';
+      var comNum = g.obras.some(function (o) { return o.n; });
+      html += '<ol class="indice poemas' + (comNum ? '' : ' sem-num') + '">';
+      g.obras.forEach(function (o) {
+        var extra = o.traducao ? '<span class="orig-tit" lang="' + esc(o.traducao.codigo || '') + '">' + esc(o.traducao.titulo) + '</span>' :
+          o.partes.length > 1 ? '<span class="orig-tit">' + esc(fichaObra(o)) + '</span>' : '';
+        html += '<li><a href="' + linkObra(o) + '">' +
+          (comNum ? '<span class="num">' + esc(o.n) + '</span>' : '') +
+          '<span class="tit"' + (o.lingua ? ' lang="' + esc(o.lingua) + '"' : '') + '>' + esc(o.titulo) + extra + '</span>' +
+          '</a></li>';
+      });
+      html += '</ol>';
+    });
+    return html;
+  }
+
+  /* Poemas de uma forma: #/a/<autor>/poesia/<forma> */
+  function paginaPasta(id, formaId) {
+    var a = acharAutor(id), f = acharForma(formaId);
+    if (!a || !f) return naoAchei();
+    var obras = poesiaDe(a.id).filter(function (o) { return (o.forma || 'outras') === f.id; });
+    if (!obras.length) return naoAchei();
+    var itens = [{ txt: a.nome, href: '#/a/' + a.id }];
+    if (!soPoesia(a.id)) itens.push({ txt: 'Poesia', href: '#/a/' + a.id + '/poesia' });
+    definirTrilha(itens.concat({ txt: f.nome }));
+    definirProgresso(null);
+    var html = '<div class="folha">' +
+      '<header class="cabeca"><h1>' + esc(f.nome) + '</h1><p class="meta">' + esc(a.nome) + ' · ' + plural(obras.length, 'poema', 'poemas') + '</p></header>' +
+      htmlListaPoemas(obras) + '</div>';
+    render(html, f.nome + ' — ' + a.nome);
+  }
+
+  /* Página do autor: escolha do gênero (num poeta, direto as pastas de poesia) */
   function paginaAutor(id) {
     var a = acharAutor(id);
     if (!a) return naoAchei();
     definirTrilha([{ txt: a.nome }]);
     definirProgresso(null);
+    if (soPoesia(a.id)) {
+      render('<div class="folha">' + cabecaAutor(a) + htmlPastas(a, poesiaDe(a.id)) + '</div>', a.nome);
+      return;
+    }
     var html = '<div class="folha">' + cabecaAutor(a) + '<p class="secao-titulo">Gêneros</p>';
     generosDe(a.id).forEach(function (x) {
       var grupos = porColetanea(x.obras);
@@ -327,6 +607,10 @@
     definirProgresso(null);
     var html = '<div class="folha">' +
       '<header class="cabeca"><h1>' + esc(nomeGenero(x.genero)) + '</h1><p class="meta">' + esc(a.nome) + '</p></header>';
+    if (x.genero === 'Poesia') {
+      render(html + htmlPastas(a, x.obras) + '</div>', 'Poesia — ' + a.nome);
+      return;
+    }
     porColetanea(x.obras).forEach(function (g) {
       if (g.titulo) html += '<p class="secao-titulo"><em>' + esc(g.titulo) + '</em>' + (g.ano ? ' · ' + g.ano : '') + '</p>';
       g.obras.forEach(function (o) {
@@ -347,7 +631,8 @@
     if (!o) return naoAchei();
     var a = acharAutor(o.autor) || { nome: o.autor, id: o.autor };
     var d = o.divisao || { singular: 'parte', plural: 'partes' };
-    definirTrilha([{ txt: a.nome, href: '#/a/' + a.id }, trilhaGenero(a, o.genero || 'Outros'), { txt: o.titulo }]);
+    definirTrilha((o.poema ? trilhaPasta(a, o) : [{ txt: a.nome, href: '#/a/' + a.id }, trilhaGenero(a, o.genero || 'Outros')])
+      .concat({ txt: o.titulo }));
     definirProgresso(null);
 
     var pos = posicaoSalva(o);
@@ -356,12 +641,13 @@
       '<p class="rosto-autor">' + esc(a.nome) + '</p>' +
       '<h1>' + esc(o.titulo) + '</h1>' +
       (o.subtitulo ? '<p class="subtitulo-obra">' + inline(o.subtitulo) + '</p>' : '') +
-      '<p class="meta">' + (o.coletanea ? '<em>' + esc(o.coletanea.titulo) + '</em>, ' + esc(o.coletanea.ano) + ' · ' : '') + esc(fichaObra(o)) + '</p>' +
+      '<p class="meta">' + (o.coletanea && o.coletanea.titulo !== o.titulo ? '<em>' + esc(o.coletanea.titulo) + '</em>' + (o.coletanea.ano ? ', ' + esc(o.coletanea.ano) : '') + ' · ' :
+        o.poema && o.ano ? esc(o.ano) + ' · ' : '') + esc(fichaObra(o)) + '</p>' +
       (o.publicacao ? '<p class="publicacao">' + inline(textoPublicacao(o)) + '</p>' : '') +
       (o.descricao ? '<p class="descricao">' + inline(o.descricao) + '</p>' : '') +
       '<p class="acoes">' +
       '<a class="botao" href="#/o/' + o.id + '/' + (pos || 1) + '">' + (pos && pos > 1 ? 'Continuar: ' + esc(rotuloParte(o, o.partes[pos - 1])) : 'Começar a ler') + '</a>' +
-      (o.edicao ? ' <a class="botao secundario" href="#/o/' + o.id + '/sobre">Sobre esta edição</a>' : '') +
+      (o.edicao ? ' <a class="botao secundario" href="#/o/' + o.id + '/sobre">' + esc(tituloSobre(o)) + '</a>' : '') +
       '</p>' +
       '</header>' +
       '<p class="secao-titulo">' + esc(d.plural.charAt(0).toUpperCase() + d.plural.slice(1)) + '</p>' +
@@ -386,57 +672,172 @@
     if (!p) return naoAchei();
     var a = acharAutor(o.autor) || { nome: o.autor, id: o.autor };
     var total = o.partes.length;
-    var conto = !!o.coletanea;
-    var passos = [
-      { txt: a.nome, href: '#/a/' + a.id },
-      { txt: o.titulo, href: '#/o/' + o.id },
-      { txt: rotuloParte(o, p) }
-    ];
-    if (conto) {
-      passos.splice(1, 0, trilhaGenero(a, o.genero || 'Outros'));
-      if (total === 1) passos = passos.slice(0, 2).concat({ txt: o.titulo });
+    var poema = !!o.poema;
+    var conto = !!o.coletanea || poema;
+    var bilingue = p.original !== undefined && p.original !== null;
+    var passos;
+    if (poema) {
+      passos = trilhaPasta(a, o).concat(total > 1 ?
+        [{ txt: o.titulo, href: '#/o/' + o.id }, { txt: rotuloParte(o, p) }] : [{ txt: o.titulo }]);
+    } else {
+      passos = [
+        { txt: a.nome, href: '#/a/' + a.id },
+        { txt: o.titulo, href: '#/o/' + o.id },
+        { txt: rotuloParte(o, p) }
+      ];
+      if (conto) {
+        passos.splice(1, 0, trilhaGenero(a, o.genero || 'Outros'));
+        if (total === 1) passos = passos.slice(0, 2).concat({ txt: o.titulo });
+      }
     }
     definirTrilha(passos);
     definirProgresso(i / total);
 
-    /* vizinhos: a parte anterior e a seguinte; nas pontas de um conto, o texto vizinho da coletânea */
+    /* vizinhos: a parte anterior e a seguinte; nas pontas de um conto, o texto vizinho da coletânea;
+       nas de um poema, o poema vizinho da mesma pasta */
     function passo(cls, rel, dir, href, alvo) {
       return '<a class="passo ' + cls + '" href="' + href + '" rel="' + rel + '"><span class="dir">' + dir + '</span><span class="alvo">' + alvo + '</span></a>';
     }
+    function indice(href, alvo) {
+      return '<a class="passo seg" href="' + href + '"><span class="dir">Índice</span><span class="alvo">' + esc(alvo) + '</span></a>';
+    }
     var navAnt = '<span class="passo vazio"></span>', navSeg;
-    var irmaos = conto ? daColetanea(o) : [], k = irmaos.indexOf(o);
+    var irmaos = poema ? vizinhosPoema(o) : conto ? daColetanea(o) : [], k = irmaos.indexOf(o);
     if (i > 1) navAnt = passo('ant', 'prev', '← Anterior', '#/o/' + o.id + '/' + (i - 1), rotuloPasso(o.partes[i - 2]));
     else if (k > 0) navAnt = passo('ant', 'prev', '← Anterior', '#/o/' + irmaos[k - 1].id + '/' + irmaos[k - 1].partes.length, esc(irmaos[k - 1].titulo));
     if (i < total) navSeg = passo('seg', 'next', 'Seguinte →', '#/o/' + o.id + '/' + (i + 1), rotuloPasso(o.partes[i]));
     else if (k >= 0 && k < irmaos.length - 1) navSeg = passo('seg', 'next', 'Seguinte →', '#/o/' + irmaos[k + 1].id + '/1', esc(irmaos[k + 1].titulo));
-    else if (conto) navSeg = '<a class="passo seg" href="#/a/' + a.id + '/' + slugGenero(o.genero) + '"><span class="dir">Índice</span><span class="alvo">' + esc(nomeGenero(o.genero)) + '</span></a>';
-    else navSeg = '<a class="passo seg" href="#/o/' + o.id + '"><span class="dir">Índice</span><span class="alvo">' + esc(o.titulo) + '</span></a>';
+    else if (poema) navSeg = indice(hrefIndicePoema(a, o), pastasDe(poesiaDe(a.id)).length > 1 ? acharForma(o.forma || 'outras').nome : 'Poesia');
+    else if (conto) navSeg = indice('#/a/' + a.id + '/' + slugGenero(o.genero), nomeGenero(o.genero));
+    else navSeg = indice('#/o/' + o.id, o.titulo);
+
+    /* título: nas traduções, o original e o traduzido, cada um sobre o seu texto */
+    function titulo(tag, cls, trad, orig) {
+      var h = '<' + tag + (cls ? ' class="' + cls + '"' : '') + '>';
+      if (!bilingue || !orig) return h + inline(trad) + '</' + tag + '>';
+      var lingua = o.traducao ? o.traducao.codigo || '' : '';
+      return '<div class="paralelo titulos">' +
+        '<div class="orig" data-i="t"' + (lingua ? ' lang="' + esc(lingua) + '"' : '') + '>' + h + inline(orig) + '</' + tag + '></div>' +
+        '<div class="trad" data-i="t">' + h + inline(trad) + '</' + tag + '></div></div>';
+    }
 
     var cabeca;
     if (conto) {
-      /* o conto se apresenta na 1ª parte; os capítulos seguintes só com número e título */
+      /* o conto (ou o poema) se apresenta na 1ª parte; as seguintes só com número e título */
+      var livro = [o.coletanea ? '<em>' + esc(o.coletanea.titulo) + '</em>' : '', o.secao ? esc(o.secao) : ''].filter(Boolean).join(' · ');
       cabeca = (i === 1 ?
-        '<p class="coletanea-parte"><em>' + esc(o.coletanea.titulo) + '</em></p>' +
-        '<h1 class="titulo-conto">' + esc(o.titulo) + '</h1>' +
+        (livro ? '<p class="coletanea-parte">' + livro + '</p>' : '') +
+        (poema && o.n ? '<p class="num-parte">' + esc(o.n) + '</p>' : '') +
+        titulo('h1', 'titulo-conto', o.titulo, o.traducao && o.traducao.titulo) +
         (o.subtitulo ? '<p class="subtitulo-obra">' + inline(o.subtitulo) + '</p>' : '') +
+        (o.traducao ? '<p class="publicacao">Tradução do ' + esc(o.traducao.lingua) + '</p>' : '') +
         (o.publicacao ? '<p class="publicacao">' + inline(textoPublicacao(o)) + '</p>' : '') : '') +
-        (total > 1 ? (p.n ? '<p class="num-parte">' + esc(p.n) + '</p>' : '') + (p.titulo ? '<h2>' + inline(p.titulo) + '</h2>' : '') : '');
+        (total > 1 ? (p.n ? '<p class="num-parte">' + esc(p.n) + '</p>' : '') + (p.titulo ? titulo('h2', '', p.titulo, p.tituloOriginal) : '') : '');
     } else {
       cabeca = (p.n ? '<p class="num-parte">' + esc(p.n) + '</p>' : '') +
-        (p.titulo ? '<h1>' + inline(p.titulo) + '</h1>' : '');
+        (p.titulo ? titulo('h1', '', p.titulo, p.tituloOriginal) : '');
     }
 
-    var html = '<article class="folha leitura">' +
+    var html = '<article class="folha leitura' + (poema ? ' de-poema' : '') + (bilingue ? ' bilingue ver-trad' : '') + '">' +
       '<header class="cabeca-parte' + (conto && i === 1 ? ' conto' : '') + '">' + cabeca + '</header>' +
-      '<div class="texto">' + blocos(p.texto) + '</div>' +
-      (i < total ? '' : '<p class="fim">Fim</p>') +
-      '<nav class="passos" aria-label="Navegação entre ' + esc(o.divisao ? o.divisao.plural : 'partes') + '">' +
+      textoParte(o, p) +
+      (i < total || poema ? '' : '<p class="fim">Fim</p>') +
+      '<nav class="passos" aria-label="Navegação entre ' + esc(poema && total === 1 ? 'poemas' : o.divisao ? o.divisao.plural : 'partes') + '">' +
       navAnt + navSeg + '</nav>' +
       (total > 1 ? '<p class="posicao">' + i + ' de ' + total + ' · <a href="#/o/' + o.id + '">índice</a></p>' : '') +
-      (conto && o.edicao && i === total ? '<p class="posicao"><a href="#/o/' + o.id + '/sobre">Sobre esta edição</a></p>' : '') +
+      (conto && o.edicao && i === total ? '<p class="posicao"><a href="#/o/' + o.id + '/sobre">' + esc(tituloSobre(o)) + '</a></p>' : '') +
       '</article>';
     render(html, (p.titulo && p.titulo !== o.titulo ? p.titulo + ' — ' : '') + o.titulo);
+    obraNaTela = o.id;
+    if (bilingue) ativarIdiomas(o);
     registrarLeitura(o, i);
+  }
+
+  function tituloSobre(o) { return (o.edicao && o.edicao.titulo) || 'Sobre esta edição'; }
+
+  /* ----------------------------- original e tradução ----------------------------- */
+
+  /* Estado dos dois botões: todo texto abre só com a tradução; a escolha segue de parte em parte
+     da mesma obra. "ultimo" é o último lado ligado: em tela estreita, com os dois ligados, é ele
+     que aparece. */
+  var idiomas = { obra: null, orig: false, trad: true, ultimo: 'trad' };
+  var ESTREITO = window.matchMedia ? window.matchMedia('(max-width: 760px)') : { matches: false };
+
+  function verAtual() {
+    if (idiomas.orig && idiomas.trad) return ESTREITO.matches ? idiomas.ultimo : 'ambos';
+    return idiomas.orig ? 'orig' : 'trad';
+  }
+
+  function ativarIdiomas(o) {
+    if (idiomas.obra !== o.id || obraAnterior !== o.id) idiomas = { obra: o.id, orig: false, trad: true, ultimo: 'trad' };
+    var barra = document.getElementById('idiomas');
+    var nome = o.traducao && o.traducao.lingua ? o.traducao.lingua : 'original';
+    var bo = barra.querySelector('[data-lado="orig"]');
+    bo.textContent = nome.charAt(0).toUpperCase() + nome.slice(1);
+    bo.title = 'Mostrar ou esconder o original' + (o.traducao && o.traducao.lingua ? ' em ' + o.traducao.lingua : '');
+    barra.hidden = false;
+    aplicarIdiomas(false);
+  }
+
+  function aplicarIdiomas(manter) {
+    var art = app.querySelector('.bilingue');
+    if (!art) return;
+    var ancora = manter ? pegarAncora(art) : null;
+    var v = verAtual();
+    /* a classe diz o que está ligado; em tela estreita, o CSS mostra só o "ultimo" dos dois
+       (assim a troca de largura não depende de evento nenhum) */
+    art.classList.remove('ver-orig', 'ver-trad', 'ver-ambos', 'ultimo-orig', 'ultimo-trad');
+    art.classList.add(idiomas.orig && idiomas.trad ? 'ver-ambos' : 'ver-' + v, 'ultimo-' + idiomas.ultimo);
+    Array.prototype.forEach.call(document.querySelectorAll('#idiomas [data-lado]'), function (b) {
+      var lado = b.getAttribute('data-lado');
+      b.setAttribute('aria-pressed', String(v === 'ambos' || v === lado));
+    });
+    if (ancora) soltarAncora(art, ancora);
+  }
+
+  /* Pelo menos um texto fica sempre visível; em tela estreita, um de cada vez */
+  function clicarIdioma(lado) {
+    var v = verAtual(), outro = lado === 'orig' ? 'trad' : 'orig';
+    if (ESTREITO.matches) {
+      if (v === lado) return;
+      idiomas[lado] = true; idiomas[outro] = false;
+    } else if (v === 'ambos') {
+      idiomas[lado] = false;
+    } else if (v === lado) {
+      return;                          /* é o único ligado: fica */
+    } else {
+      idiomas[lado] = true;
+    }
+    if (idiomas[lado]) idiomas.ultimo = lado;
+    else idiomas.ultimo = outro;
+    aplicarIdiomas(true);
+  }
+
+  /* Âncora da rolagem: a primeira linha visível sob o topo e a sua distância ao topo;
+     depois da troca, a mesma linha (o mesmo verso ou parágrafo, do outro lado) volta ao mesmo lugar */
+  function alturaTopo() {
+    var t = document.querySelector('.topo');
+    return t ? t.getBoundingClientRect().bottom : 0;
+  }
+  function pegarAncora(art) {
+    if (window.scrollY < 4) return null;
+    var topo = alturaTopo(), cels = art.querySelectorAll('[data-i]');
+    for (var j = 0; j < cels.length; j++) {
+      var c = cels[j];
+      if (!c.offsetParent) continue;
+      var r = c.getBoundingClientRect();
+      if (r.bottom > topo + 2) return { i: c.getAttribute('data-i'), dy: r.top - topo };
+    }
+    return null;
+  }
+  function soltarAncora(art, a) {
+    var cels = art.querySelectorAll('[data-i="' + a.i + '"]');
+    for (var j = 0; j < cels.length; j++) {
+      if (!cels[j].offsetParent) continue;
+      var r = cels[j].getBoundingClientRect();
+      window.scrollBy(0, r.top - alturaTopo() - a.dy);
+      return;
+    }
   }
 
   /* a coluna do lugar (capítulo, nota) some quando nenhuma linha a preenche: conto sem capítulos */
@@ -464,16 +865,13 @@
     var d = o.divisao || { singular: 'parte' };
     var rotParte = o.coletanea && o.partes.length === 1 ? 'Onde' : d.singular.charAt(0).toUpperCase() + d.singular.slice(1);
     var rotBase = e.base || '1ª edição';
-    definirTrilha([
-      { txt: a.nome, href: '#/a/' + a.id },
-      trilhaGenero(a, o.genero || 'Outros'),
-      { txt: o.titulo, href: linkObra(o) },
-      { txt: 'Sobre esta edição' }
-    ]);
+    var tit = tituloSobre(o);
+    definirTrilha((o.poema ? trilhaPasta(a, o) : [{ txt: a.nome, href: '#/a/' + a.id }, trilhaGenero(a, o.genero || 'Outros')])
+      .concat({ txt: o.titulo, href: linkObra(o) }, { txt: tit }));
     definirProgresso(null);
 
     var html = '<article class="folha sobre">' +
-      '<header class="cabeca"><h1>Sobre esta edição</h1><p class="meta">' +
+      '<header class="cabeca"><h1>' + esc(tit) + '</h1><p class="meta">' +
       (o.coletanea ? esc(o.titulo) + ' · <em>' + esc(o.coletanea.titulo) + '</em>' : '<em>' + esc(o.titulo) + '</em>') + ' · ' + esc(a.nome) + '</p></header>' +
       '<div class="texto">' + blocos(e.apresentacao || '') + '</div>';
 
@@ -523,8 +921,8 @@
           return '<li>' + nome + (f.nota ? ' — <span class="obs-inline">' + esc(f.nota) + '</span>' : '') + '</li>';
         }).join('') + '</ul>';
     }
-    html += '<p class="posicao"><a href="' + linkObra(o) + '">' + (o.coletanea && o.partes.length === 1 ? 'Voltar ao texto' : 'Voltar ao índice') + '</a></p></article>';
-    render(html, 'Sobre esta edição — ' + o.titulo);
+    html += '<p class="posicao"><a href="' + linkObra(o) + '">' + ((o.coletanea || o.poema) && o.partes.length === 1 ? 'Voltar ao texto' : 'Voltar ao índice') + '</a></p></article>';
+    render(html, tit + ' — ' + o.titulo);
   }
 
   function naoAchei() {
@@ -539,8 +937,23 @@
     var h = decodeURIComponent(location.hash.replace(/^#\/?/, ''));
     var p = h.split('/').filter(Boolean);
     if (!p.length) return paginaCapa();
-    if (p[0] === 'a' && p[1]) return p[2] ? paginaGenero(p[1], p[2]) : paginaAutor(p[1]);
+    if (p[0] === 'a' && p[1]) {
+      if (p[2] === 'poesia' && p[3]) return paginaPasta(p[1], p[3]);
+      return p[2] ? paginaGenero(p[1], p[2]) : paginaAutor(p[1]);
+    }
     if (p[0] === 'o' && p[1]) {
+      /* obra cujo texto ainda não chegou (poemas): carrega e volta aqui */
+      var o = acharObra(p[1]);
+      if (o && o.arquivo && !o.carregada) {
+        var alvo = location.hash;
+        render('<div class="folha cabeca"><p class="meta carregando">Carregando…</p></div>', o.titulo);
+        carregar(o, function (ok) {
+          if (location.hash !== alvo) return;
+          if (ok) rota();
+          else render('<div class="folha cabeca"><h1>Não foi possível abrir o texto</h1><p><a href="' + esc(alvo) + '" onclick="location.reload()">Tentar de novo</a></p></div>', 'Erro');
+        });
+        return;
+      }
       if (!p[2]) return paginaObra(p[1]);
       if (p[2] === 'sobre') return paginaSobre(p[1]);
       var n = parseInt(p[2], 10);
@@ -601,6 +1014,20 @@
     document.getElementById('tema').addEventListener('click', alternarTema);
     document.getElementById('fonte-menos').addEventListener('click', function () { mudarFonte(-1); });
     document.getElementById('fonte-mais').addEventListener('click', function () { mudarFonte(1); });
+    Array.prototype.forEach.call(document.querySelectorAll('#idiomas [data-lado]'), function (b) {
+      b.addEventListener('click', function () { clicarIdioma(b.getAttribute('data-lado')); });
+    });
+    /* ao passar de tela larga para estreita (ou o contrário), um texto ou os dois;
+       o "resize" cobre os navegadores que não avisam a mudança da consulta de mídia */
+    var eraEstreito = ESTREITO.matches;
+    function mudouLargura() {
+      if (ESTREITO.matches === eraEstreito) return;
+      eraEstreito = ESTREITO.matches;
+      aplicarIdiomas(true);
+    }
+    if (ESTREITO.addEventListener) ESTREITO.addEventListener('change', mudouLargura);
+    else if (ESTREITO.addListener) ESTREITO.addListener(mudouLargura);
+    window.addEventListener('resize', mudouLargura);
     window.addEventListener('hashchange', rota);
     document.addEventListener('keydown', teclado);
     rota();

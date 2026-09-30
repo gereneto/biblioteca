@@ -107,6 +107,24 @@ main:focus { outline: none; }
 }
 .btn:hover { border-color: var(--realce); color: var(--realce); }
 
+/* original e tradução: dois botões independentes (original à esquerda, tradução à direita) */
+.idiomas { border-top: 1px solid var(--linha); }
+.idiomas[hidden] { display: none; }
+.idiomas-int {
+  max-width: calc(var(--medida) + 14rem); margin: 0 auto; padding: .4rem 1rem;
+  display: flex; justify-content: center;
+}
+.idioma {
+  font-family: var(--sans); font-size: .8rem; line-height: 1; cursor: pointer;
+  min-width: 7.5rem; padding: .45rem 1rem;
+  border: 1px solid var(--linha); background: transparent; color: var(--tinta-suave);
+}
+.idioma:first-child { border-radius: 999px 0 0 999px; }
+.idioma:last-child { border-radius: 0 999px 999px 0; border-left: 0; }
+.idioma:hover { color: var(--realce); }
+.idioma[aria-pressed="true"] { background: var(--realce); border-color: var(--realce); color: var(--papel); }
+.idioma[aria-pressed="true"]:hover { background: var(--realce-claro); color: var(--papel); }
+
 .barra-progresso { height: 2px; }
 .barra-progresso span { display: block; height: 100%; width: 0; background: var(--realce); transition: width .25s ease; }
 
@@ -231,6 +249,62 @@ main { padding: 0 1rem 5rem; }
 }
 .texto em { font-style: italic; }
 .leitura .texto p:first-child { text-indent: 0; }
+
+/* ---------------- Poemas e textos em paralelo ---------------- */
+
+/* Grade de linhas: cada verso (ou parágrafo) do original e da tradução ocupa a mesma linha,
+   de modo que os dois lados andam juntos; escondido um dos lados, sobra uma coluna. */
+.paralelo { display: grid; grid-template-columns: minmax(0, 1fr); }
+.bilingue.ver-trad .orig, .bilingue.ver-orig .trad { display: none; }
+.leitura.bilingue.ver-ambos { max-width: calc(var(--medida) * 2 + 3rem); }
+.bilingue.ver-ambos .paralelo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: clamp(1.5rem, 4vw, 3.5rem); }
+.bilingue.ver-ambos .paralelo.poema { width: 100%; }
+
+/* tela estreita: um texto de cada vez; com os dois ligados, o último escolhido */
+@media (max-width: 760px) {
+  .leitura.bilingue.ver-ambos { max-width: var(--medida); }
+  .bilingue.ver-ambos .paralelo { grid-template-columns: minmax(0, 1fr); }
+  .bilingue.ver-ambos.ultimo-orig .trad, .bilingue.ver-ambos.ultimo-trad .orig { display: none; }
+}
+
+/* poema: bloco centrado na largura do verso mais longo */
+.paralelo.poema { width: fit-content; max-width: 100%; margin: 0 auto; }
+.paralelo.poema > div { text-align: left; }
+.paralelo .v { padding-left: 1.6em; text-indent: -1.6em; line-height: 1.6; }
+.paralelo .ini { margin-top: 1.05em; }
+
+.paralelo .m { color: var(--tinta-suave); }
+.paralelo .m-parte { text-align: center; letter-spacing: .18em; color: var(--tinta-tenue); margin: 1.6em 0 .7em; }
+.paralelo .m-parte:first-child, .paralelo .m-parte[data-i="0"] { margin-top: 0; }
+.paralelo .m-subtitulo { text-align: center; font-style: italic; margin: 1.4em 0 .5em; }
+.paralelo .m-fala { font-variant: small-caps; letter-spacing: .06em; margin-bottom: .15em; }
+.paralelo .m-voz { font-style: italic; font-size: .92em; line-height: 1.45; margin-bottom: .2em; }
+.paralelo .m-epigrafe {
+  font-style: italic; font-size: .88em; line-height: 1.5; text-align: right;
+  max-width: 24rem; margin: 0 0 1.4em auto;
+}
+.paralelo .m-dedicatoria { font-style: italic; font-size: .9em; text-align: right; margin-bottom: 1.2em; }
+.paralelo .m-data, .paralelo .m-fecho { font-style: italic; font-size: .9em; text-align: right; margin-top: 1em; }
+.paralelo .m-separador, .paralelo .m-lacuna { text-align: center; color: var(--tinta-tenue); letter-spacing: .25em; margin: .9em 0; }
+.paralelo .m-pagina { height: 1.2em; }
+.fio { display: inline-block; width: 4rem; border-top: 1px solid var(--tinta-tenue); vertical-align: middle; }
+
+/* prosa em paralelo: os parágrafos dos dois lados começam na mesma altura */
+.paralelo.prosa .p:not([data-i="0"]) { margin-top: .15em; }
+.leitura .texto .paralelo.prosa p:first-child { text-indent: 1.5em; }
+.leitura .texto .paralelo.prosa [data-i="0"] p { text-indent: 0; }
+
+/* títulos do original e da tradução, cada um sobre o seu texto */
+.cabeca-parte .paralelo.titulos { width: 100%; }
+.cabeca-parte .paralelo.titulos > div { text-align: center; }
+.cabeca-parte .paralelo.titulos h1, .cabeca-parte .paralelo.titulos h2 { margin: 0; }
+
+.carregando { text-align: center; padding: 3rem 0; }
+
+/* lista de poemas de uma pasta */
+.indice.poemas .orig-tit { display: block; font-size: .8em; font-style: italic; color: var(--tinta-tenue); }
+.indice.sem-num a { padding-left: .5rem; }
+.cartao.pasta .cartao-texto { font-size: .9rem; }
 
 .fim {
   text-align: center; font-family: var(--sans); font-size: .78rem; letter-spacing: .3em;

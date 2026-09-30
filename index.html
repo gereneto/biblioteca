@@ -17,6 +17,8 @@
 <script defer src="conteudo/machado-de-assis/esau-e-jaco.js"></script>
 <script defer src="conteudo/machado-de-assis/memorial-de-aires.js"></script>
 <script defer src="conteudo/machado-de-assis/papeis-avulsos.js"></script>
+<!-- poesia: o índice de todos os poemas; o texto de cada autor é carregado sob demanda -->
+<script defer src="conteudo/poesia.js"></script>
 </head>
 <body>
 <a class="pular" href="#app">Ir para o texto</a>
@@ -29,6 +31,12 @@
       <button type="button" id="fonte-menos" class="btn" aria-label="Diminuir a letra" title="Diminuir a letra">A−</button>
       <button type="button" id="fonte-mais" class="btn" aria-label="Aumentar a letra" title="Aumentar a letra">A+</button>
       <button type="button" id="tema" class="btn" aria-label="Alternar tema claro e escuro" title="Alternar tema">◐</button>
+    </div>
+  </div>
+  <div class="idiomas" id="idiomas" hidden>
+    <div class="idiomas-int" role="group" aria-label="Textos visíveis: original e tradução">
+      <button type="button" class="idioma" data-lado="orig" aria-pressed="false">Original</button>
+      <button type="button" class="idioma" data-lado="trad" aria-pressed="true" title="Mostrar ou esconder a tradução">Português</button>
     </div>
   </div>
   <div class="barra-progresso" id="progresso" hidden><span></span></div>
