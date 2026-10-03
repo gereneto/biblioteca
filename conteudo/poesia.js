@@ -1029,6 +1029,7 @@ BIBLIOTECA.poemas({
   livros: [{"id":"the-raven-and-other-poems","titulo":"The Raven and Other Poems","ano":1845}],
   poemas: [
     {"id":"annabel-lee","titulo":"Annabel Lee","forma":"outras","livro":-1,"ordem":1849,"ano":1849,"versos":41,"traducao":{"lingua":"inglês","codigo":"en","titulo":"Annabel Lee"}},
+    {"id":"a-helena","titulo":"A Helena","forma":"outras","livro":0,"ordem":1831,"ano":1831,"versos":15,"traducao":{"lingua":"inglês","codigo":"en","titulo":"To Helen"}},
     {"id":"o-corvo","titulo":"O corvo","forma":"outras","livro":0,"ordem":1845,"ano":1845,"versos":108,"traducao":{"lingua":"inglês","codigo":"en","titulo":"The Raven"}}
   ]
 });
