@@ -57,7 +57,29 @@ def palavras(textos):
 
 
 def sem_url(corpo):
-    return '\n'.join(l for l in corpo.split('\n') if 'http' not in l and 'carmeldelisieux' not in l).strip()
+    """Tira do original o que é do site dos Arquivos, não de Teresa: endereços, códigos de galeria,
+    legendas de link («Lire ici...»), notas dos editores marcadas com asterisco."""
+    fora = ('http', 'carmeldelisieux', '{gallery}', 'Lire ici')
+    linhas = [l for l in corpo.split('\n') if not any(x in l for x in fora) and not l.startswith('_*')]
+    return '\n'.join(linhas).strip()
+
+
+def linhas_em_paragrafos(corpo):
+    """Cartas e orações seguem as linhas do original (o site dos Arquivos quebra os parágrafos com
+    <br>): cada linha vira um parágrafo; versos seguidos («| ») ficam juntos numa estrofe."""
+    blocos, verso = [], []
+    for l in corpo.split('\n'):
+        if l.startswith('|'):
+            verso.append(l)
+            continue
+        if verso:
+            blocos.append('\n'.join(verso))
+            verso = []
+        if l.strip():
+            blocos.append(l.strip())
+    if verso:
+        blocos.append('\n'.join(verso))
+    return '\n\n'.join(blocos)
 
 
 # ------------------------------------------------------------------ manuscritos
@@ -203,7 +225,8 @@ def cartas():
         cab_fr, corpo_fr = ler(os.path.join(ORIG, 'cartas', f))
         n = cab.get('carta') or 'LT ' + str(int(re.search(r'\d+', f).group())) + ('bis' if 'bis' in f else '')
         titulo = ' · '.join(x for x in (cab.get('destinatario', ''), cab.get('data', '')) if x)
-        partes.append({'n': n, 'titulo': titulo, 'texto': corpo, 'original': sem_url(corpo_fr),
+        partes.append({'n': n, 'titulo': titulo, 'texto': linhas_em_paragrafos(corpo),
+                       'original': linhas_em_paragrafos(sem_url(corpo_fr)),
                        'tituloOriginal': re.sub(r'^LT\s*\d+\w*\s*[–-]\s*', '', cab_fr.get('titulo', '')).replace(' – ', ' · ')})
     return partes, []
 
@@ -218,7 +241,8 @@ def oracoes():
         cab, corpo = ler(os.path.join(pasta, f))
         cab_fr, corpo_fr = ler(os.path.join(ORIG, 'oracoes', f))
         n = cab.get('oracao') or 'Pri ' + str(int(re.search(r'\d+', f).group()))
-        partes.append({'n': n, 'titulo': cab.get('titulo', ''), 'texto': corpo, 'original': sem_url(corpo_fr),
+        partes.append({'n': n, 'titulo': cab.get('titulo', ''), 'texto': linhas_em_paragrafos(corpo),
+                       'original': linhas_em_paragrafos(sem_url(corpo_fr)),
                        'tituloOriginal': re.sub(r'^Pri\s*\d+\s*[–-]\s*', '', cab_fr.get('titulo', ''))})
     return partes, []
 

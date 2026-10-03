@@ -103,11 +103,13 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  /* Marcação mínima dos textos: _itálico_ e **negrito**; {Ms A 45v} marca a folha do manuscrito */
+  /* Marcação mínima dos textos: _itálico_ e **negrito**; {Ms A 45v} marca a folha do manuscrito;
+     {§ I.1} marca o capítulo e a seção (numeração usual de uma obra, para citação) */
   function inline(s) {
     return esc(s)
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
       .replace(/_([^_]+)_/g, '<em>$1</em>')
+      .replace(/\s*\{§ ([^}]+)\}\s*/g, function (m, x) { return ' <span class="folha-ms" title="capítulo e seção">' + x + '</span> '; })
       .replace(/\s*\{Ms ([A-C]) (\d+)([rv]?)\}\s*/g, function (m, ms, f, l) {
         return ' <span class="folha-ms" title="Manuscrito ' + ms + ', folha ' + f + (l === 'r' ? ' recto' : l === 'v' ? ' verso' : '') + '">' + ms + ' ' + f + l + '</span> ';
       }).replace(/^ | $/g, '');
@@ -234,7 +236,7 @@
   }
 
   function incipit(texto, limite) {
-    var t = String(texto).replace(/^\|\s?/gm, '').replace(/[_*]/g, '').replace(/\s+/g, ' ').trim();
+    var t = String(texto).replace(/\{[^}]*\}/g, '').replace(/^\|\s?/gm, '').replace(/[_*]/g, '').replace(/\s+/g, ' ').trim();
     if (t.length <= limite) return esc(t);
     var corte = t.slice(0, limite);
     corte = corte.slice(0, corte.lastIndexOf(' '));
@@ -254,11 +256,12 @@
   function rotuloPasso(p) { return [esc(p.n), p.titulo ? inline(p.titulo) : ''].filter(Boolean).join(' · '); }
 
   /* Ordem dos gêneros na página do autor e o nome de cada um */
-  var GENEROS = ['Romance', 'Novela', 'Contos', 'Autobiografia', 'Poesia', 'Teatro', 'Cartas', 'Orações',
-    'Crônica', 'Crítica', 'Tradução'];
+  var GENEROS = ['Romance', 'Novela', 'Contos', 'Autobiografia', 'Hagiografia', 'Ensaio', 'Poesia', 'Teatro',
+    'Cartas', 'Orações', 'Crônica', 'Crítica', 'Tradução'];
   var PLURAIS = { 'Romance': 'Romances', 'Novela': 'Novelas', 'Contos': 'Contos', 'Poesia': 'Poesia',
     'Teatro': 'Teatro', 'Crônica': 'Crônicas', 'Crítica': 'Crítica', 'Tradução': 'Traduções',
-    'Autobiografia': 'Autobiografia', 'Cartas': 'Cartas', 'Orações': 'Orações' };
+    'Autobiografia': 'Autobiografia', 'Cartas': 'Cartas', 'Orações': 'Orações',
+    'Hagiografia': 'Hagiografia', 'Ensaio': 'Ensaios' };
 
   /* Áreas da capa: cada autor pertence a uma (campo "area"; sem ele, Literatura) */
   var AREAS = [{ id: 'literatura', nome: 'Literatura' }, { id: 'catolicismo', nome: 'Catolicismo' }];
