@@ -11,6 +11,18 @@ BIBLIOTECA.autor({
   nota: 'Romancista, contista, poeta e cronista carioca; fundador da Academia Brasileira de Letras.'
 });
 
+/* Catolicismo ("area": a pasta da capa; sem ela, o autor fica em Literatura) */
+
+BIBLIOTECA.autor({
+  id: 'santa-teresinha',
+  area: 'catolicismo',
+  nome: 'Santa Teresinha',
+  nomeCompleto: 'Teresa do Menino Jesus e da Sagrada Face (Thérèse Martin)',
+  vida: '1873–1897',
+  ordem: 'Teresinha do Menino Jesus, Santa',
+  nota: 'Carmelita de Lisieux, doutora da Igreja; a obra completa, traduzida do francês.'
+});
+
 /* Poetas (poemas publicados a partir do Versificador; ver ferramentas/poesia.py) */
 
 BIBLIOTECA.autor({

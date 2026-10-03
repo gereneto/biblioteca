@@ -4,7 +4,8 @@
 
    Rotas (usam # para funcionar em qualquer hospedagem estática
    e também abrindo o index.html direto do disco):
-     #/                      capa: autores e "continuar a leitura"
+     #/                      capa: as pastas (Literatura, Catolicismo) e "continuar a leitura"
+     #/s/<area>              autores de uma pasta
      #/a/<autor>             gêneros em que o autor tem obras
      #/a/<autor>/<genero>    obras do autor nesse gênero (romances, contos, poesia...)
      #/a/<autor>/poesia/<forma>  poemas de uma forma (sonetos, apólogos...), por livro
@@ -102,11 +103,14 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  /* Marcação mínima dos textos: _itálico_ e **negrito** */
+  /* Marcação mínima dos textos: _itálico_ e **negrito**; {Ms A 45v} marca a folha do manuscrito */
   function inline(s) {
     return esc(s)
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/_([^_]+)_/g, '<em>$1</em>');
+      .replace(/_([^_]+)_/g, '<em>$1</em>')
+      .replace(/\s*\{Ms ([A-C]) (\d+)([rv]?)\}\s*/g, function (m, ms, f, l) {
+        return ' <span class="folha-ms" title="Manuscrito ' + ms + ', folha ' + f + (l === 'r' ? ' recto' : l === 'v' ? ' verso' : '') + '">' + ms + ' ' + f + l + '</span> ';
+      }).replace(/^ | $/g, '');
   }
 
   /* Parágrafos separados por linha em branco; linhas com "| " formam versos;
@@ -124,6 +128,9 @@
 
   function paragrafos(lista) {
     return lista.map(function (b) {
+      /* teatro: "## Cena 2" (título de cena) e "@ JOANA, _timidamente_." (quem fala) */
+      if (/^## /.test(b)) return '<p class="cena">' + inline(b.slice(3).trim()) + '</p>';
+      if (/^@ /.test(b)) return '<p class="fala">' + inline(b.slice(2).trim()) + '</p>';
       var linhas = b.split('\n');
       var verso = linhas.every(function (l) { return /^\|\s?/.test(l); });
       if (verso) {
@@ -247,9 +254,16 @@
   function rotuloPasso(p) { return [esc(p.n), p.titulo ? inline(p.titulo) : ''].filter(Boolean).join(' · '); }
 
   /* Ordem dos gêneros na página do autor e o nome de cada um */
-  var GENEROS = ['Romance', 'Novela', 'Contos', 'Poesia', 'Teatro', 'Crônica', 'Crítica', 'Tradução'];
+  var GENEROS = ['Romance', 'Novela', 'Contos', 'Autobiografia', 'Poesia', 'Teatro', 'Cartas', 'Orações',
+    'Crônica', 'Crítica', 'Tradução'];
   var PLURAIS = { 'Romance': 'Romances', 'Novela': 'Novelas', 'Contos': 'Contos', 'Poesia': 'Poesia',
-    'Teatro': 'Teatro', 'Crônica': 'Crônicas', 'Crítica': 'Crítica', 'Tradução': 'Traduções' };
+    'Teatro': 'Teatro', 'Crônica': 'Crônicas', 'Crítica': 'Crítica', 'Tradução': 'Traduções',
+    'Autobiografia': 'Autobiografia', 'Cartas': 'Cartas', 'Orações': 'Orações' };
+
+  /* Áreas da capa: cada autor pertence a uma (campo "area"; sem ele, Literatura) */
+  var AREAS = [{ id: 'literatura', nome: 'Literatura' }, { id: 'catolicismo', nome: 'Catolicismo' }];
+  function areaDe(a) { return a.area || 'literatura'; }
+  function acharArea(id) { return AREAS.filter(function (x) { return x.id === id; })[0] || null; }
 
   function nomeGenero(g) { return PLURAIS[g] || g; }
   /* "Romance" -> "romances" (endereço da página do gênero) */
@@ -281,7 +295,8 @@
       return [o.partes.length > 1 ? plural(numeradas(o), d.singular, d.plural) : '',
         milhar(palavras(o)) + ' palavras'].filter(Boolean).join(' · ');
     }
-    return [o.ano ? String(o.ano) : '', plural(numeradas(o), d.singular, d.plural),
+    /* "datas": período de composição, quando a obra não tem um ano só ("1895–1897") */
+    return [o.datas || (o.ano ? String(o.ano) : ''), plural(numeradas(o), d.singular, d.plural),
       milhar(palavras(o)) + ' palavras'].filter(Boolean).join(' · ');
   }
 
@@ -410,6 +425,10 @@
   function rotuloParte(obra, parte) {
     if (!parte.n && !parte.titulo) return obra.titulo;                        /* conto sem capítulos */
     if (!parte.n) return String(parte.titulo || '').replace(/[_*]/g, '');   /* contos, poemas: o título */
+    /* partes com sigla própria ("LT 12", "PN 17"): a sigla; partes agrupadas sob uma sigla
+       ("Ms A"): o título */
+    if (obra.divisao && obra.divisao.rotulo === 'n') return parte.n;
+    if (obra.divisao && obra.divisao.rotulo === 'nome') return String(parte.titulo || parte.n).replace(/[_*]/g, '');
     /* diários: a data e o ano ("9 de janeiro, 1888") */
     if (obra.divisao && obra.divisao.rotulo === 'titulo') return String(parte.titulo || '').replace(/[_*]/g, '') + ', ' + parte.n;
     var d = obra.divisao ? obra.divisao.singular : 'parte';
@@ -440,7 +459,16 @@
 
   /* ----------------------------- moldura ----------------------------- */
 
+  /* A trilha começa pela área do autor: Catolicismo › Santa Teresinha › ... */
+  function autorDoItem(it) {
+    var m = it.href && /^#\/a\/([^/]+)$/.exec(it.href);
+    if (m) return acharAutor(m[1]);
+    if (!it.href) for (var i = 0; i < dados.autores.length; i++) if (dados.autores[i].nome === it.txt) return dados.autores[i];
+    return null;
+  }
   function definirTrilha(itens) {
+    var a = itens.length ? autorDoItem(itens[0]) : null, ar = a && acharArea(areaDe(a));
+    if (ar) itens = [{ txt: ar.nome, href: '#/s/' + ar.id }].concat(itens);
     trilha.innerHTML = itens.map(function (it) {
       return it.href ? '<a href="' + it.href + '">' + esc(it.txt) + '</a>' : '<span>' + esc(it.txt) + '</span>';
     }).join('<span class="sep">›</span>');
@@ -485,8 +513,38 @@
         (r.parte.titulo && rot.indexOf(String(r.parte.titulo).replace(/[_*]/g, '')) < 0 ? ': ' + inline(r.parte.titulo) : '')) + '</span></a>';
     }
 
-    html += '<p class="secao-titulo">Autores</p>';
-    autoresOrdenados().forEach(function (a) {
+    /* as pastas: uma por área, com o número de autores e os gêneros que há nela */
+    html += '<p class="secao-titulo">Acervo</p>';
+    AREAS.forEach(function (ar) {
+      var autores = autoresDaArea(ar.id);
+      var generos = [];
+      autores.forEach(function (a) {
+        generosDe(a.id).forEach(function (x) { if (generos.indexOf(x.genero) < 0) generos.push(x.genero); });
+      });
+      generos.sort(function (x, y) { return GENEROS.indexOf(x) - GENEROS.indexOf(y); });
+      html += '<a class="cartao pasta area" href="#/s/' + ar.id + '">' +
+        '<span class="cartao-titulo">' + esc(ar.nome) + '</span>' +
+        '<span class="cartao-meta">' + (autores.length ? plural(autores.length, 'autor', 'autores') : 'em preparação') + '</span>' +
+        (generos.length ? '<span class="cartao-texto">' + generos.map(function (g) { return esc(nomeGenero(g)); }).join(' · ') + '</span>' : '') +
+        '</a>';
+    });
+    html += '</div>';
+    render(html, '');
+  }
+
+  function autoresDaArea(id) {
+    return autoresOrdenados().filter(function (a) { return areaDe(a) === id; });
+  }
+
+  /* Autores de uma área: #/s/<area> */
+  function paginaArea(id) {
+    var ar = acharArea(id);
+    if (!ar) return naoAchei();
+    definirTrilha([{ txt: ar.nome }]);
+    definirProgresso(null);
+    var html = '<div class="folha"><header class="cabeca"><h1>' + esc(ar.nome) + '</h1></header>' +
+      '<p class="secao-titulo">Autores</p>';
+    autoresDaArea(ar.id).forEach(function (a) {
       var obras = obrasDe(a.id);
       var prosa = obras.filter(function (o) { return !o.poema; }), versos = obras.length - prosa.length;
       /* "6 obras · 26 poemas"; num poeta, só os poemas */
@@ -499,7 +557,7 @@
         '</a>';
     });
     html += '</div>';
-    render(html, '');
+    render(html, ar.nome);
   }
 
   function cabecaAutor(a) {
@@ -644,6 +702,8 @@
       '<p class="meta">' + (o.coletanea && o.coletanea.titulo !== o.titulo ? '<em>' + esc(o.coletanea.titulo) + '</em>' + (o.coletanea.ano ? ', ' + esc(o.coletanea.ano) : '') + ' · ' :
         o.poema && o.ano ? esc(o.ano) + ' · ' : '') + esc(fichaObra(o)) + '</p>' +
       (o.publicacao ? '<p class="publicacao">' + inline(textoPublicacao(o)) + '</p>' : '') +
+      (o.traducao && !o.poema ? '<p class="publicacao">Tradução do ' + esc(o.traducao.lingua) +
+        (o.traducao.titulo ? ' (<em lang="' + esc(o.traducao.codigo || '') + '">' + esc(o.traducao.titulo) + '</em>)' : '') + '</p>' : '') +
       (o.descricao ? '<p class="descricao">' + inline(o.descricao) + '</p>' : '') +
       '<p class="acoes">' +
       '<a class="botao" href="#/o/' + o.id + '/' + (pos || 1) + '">' + (pos && pos > 1 ? 'Continuar: ' + esc(rotuloParte(o, o.partes[pos - 1])) : 'Começar a ler') + '</a>' +
@@ -652,8 +712,8 @@
       '</header>' +
       '<p class="secao-titulo">' + esc(d.plural.charAt(0).toUpperCase() + d.plural.slice(1)) + '</p>' +
       '<ol class="indice">';
-    /* nos diários, o ano só aparece no índice quando muda */
-    var agrupa = o.divisao && o.divisao.rotulo === 'titulo';
+    /* nos diários, o ano só aparece no índice quando muda; o mesmo com "agrupar" (Ms A, Ms B...) */
+    var agrupa = o.divisao && (o.divisao.rotulo === 'titulo' || o.divisao.agrupar);
     o.partes.forEach(function (p, i) {
       var num = agrupa && i && o.partes[i - 1].n === p.n ? '' : p.n;
       html += '<li' + (pos === i + 1 ? ' class="atual"' : '') + '><a href="#/o/' + o.id + '/' + (i + 1) + '">' +
@@ -937,6 +997,7 @@
     var h = decodeURIComponent(location.hash.replace(/^#\/?/, ''));
     var p = h.split('/').filter(Boolean);
     if (!p.length) return paginaCapa();
+    if (p[0] === 's' && p[1]) return paginaArea(p[1]);
     if (p[0] === 'a' && p[1]) {
       if (p[2] === 'poesia' && p[3]) return paginaPasta(p[1], p[3]);
       return p[2] ? paginaGenero(p[1], p[2]) : paginaAutor(p[1]);
