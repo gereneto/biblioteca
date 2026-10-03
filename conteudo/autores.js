@@ -20,7 +20,17 @@ BIBLIOTECA.autor({
   nomeCompleto: 'Teresa do Menino Jesus e da Sagrada Face (Thérèse Martin)',
   vida: '1873–1897',
   ordem: 'Teresinha do Menino Jesus, Santa',
-  nota: 'Carmelita de Lisieux, doutora da Igreja; a obra completa, traduzida do francês.'
+  nota: 'Carmelita de Lisieux, doutora da Igreja. Obras em tradução do francês, com o original ao lado.'
+});
+
+BIBLIOTECA.autor({
+  id: 'santo-atanasio',
+  area: 'catolicismo',
+  nome: 'Santo Atanásio',
+  nomeCompleto: 'Atanásio de Alexandria',
+  vida: 'c. 296–373',
+  ordem: 'Atanásio, Santo',
+  nota: 'Bispo de Alexandria, doutor da Igreja, defensor da fé de Niceia contra os arianos. Em tradução do grego.'
 });
 
 /* Poetas (poemas publicados a partir do Versificador; ver ferramentas/poesia.py) */
