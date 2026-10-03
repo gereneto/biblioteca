@@ -26,30 +26,30 @@ EDICAO = lambda apresentacao, fontes=None: {
 
 TRADUCAO = lambda titulo: {'lingua': 'francês', 'codigo': 'fr', 'titulo': titulo}
 
-# Partes da «História de uma alma»: (manuscrito, folha onde a parte começa, quantos parágrafos
-# depois do primeiro que começa nessa folha, sigla, título). Teresa não dividiu os cadernos em
-# capítulos; as partes seguem os três manuscritos e, no Ms A, as três épocas que ela mesma distingue
-# na sua vida (até a morte da mãe, 13r; até o Natal de 1886, 45v; daí em diante). Títulos nossos.
+# Partes da «História de uma alma»: (manuscrito, começo do parágrafo francês que abre a parte —
+# vazio para o começo do manuscrito —, sigla, título). Teresa não dividiu os cadernos em capítulos;
+# as partes seguem os três manuscritos e, no Ms A, as três épocas que ela mesma distingue na sua
+# vida (Ms A 4r: até a morte da mãe; até o Natal de 1886; daí em diante). Títulos desta edição.
 PARTES_MANUSCRITOS = [
-    ('A', 'A 2r', 0, 'Ms A', 'A história de uma florzinha branca'),
-    ('A', 'A 4r', 0, 'Ms A', 'Primeira época: Alençon (1873–1877)'),
-    ('A', 'A 13r', 1, 'Ms A', 'Segunda época: os Buissonnets (1877–1882)'),
-    ('A', 'A 25v', 0, 'Ms A', 'A entrada de Paulina no Carmelo e a doença (1882–1883)'),
-    ('A', 'A 33r', 0, 'Ms A', 'A primeira comunhão e os escrúpulos (1884–1886)'),
-    ('A', 'A 45v', 0, 'Ms A', 'Terceira época: a graça do Natal (1886–1887)'),
-    ('A', 'A 55v', 0, 'Ms A', 'A viagem a Roma (1887)'),
-    ('A', 'A 67r', 0, 'Ms A', 'A entrada no Carmelo (1888–1890)'),
-    ('A', 'A 76r', 0, 'Ms A', 'A profissão e a oferenda ao Amor (1890–1895)'),
-    ('B', 'B 1r', 0, 'Ms B', 'Carta à Irmã Maria do Sagrado Coração'),
-    ('B', 'B 2r', 0, 'Ms B', 'Minha vocação é o Amor'),
-    ('C', 'C 1r', 0, 'Ms C', 'A pequena via e a provação da fé'),
-    ('C', 'C 8r', 0, 'Ms C', 'O mandamento novo'),
-    ('C', 'C 22r', 0, 'Ms C', 'As noviças e os irmãos missionários'),
-    ('C', 'C 33v', 0, 'Ms C', '«Atrai-me, e correremos»'),
+    ('A', '', 'Ms A', 'A história de uma florzinha branca'),
+    ('A', 'Je viens, ma Mère, de résumer en peu de mots', 'Ms A', 'Primeira época: Alençon (1873–1877)'),
+    ('A', "Comme je l'ai dit plus haut, c'est à partir de cette époque", 'Ms A', 'Segunda época: os Buissonnets (1877–1882)'),
+    ('A', 'Je me suis retournée un peu en arrière', 'Ms A', 'A entrada de Paulina no Carmelo e a doença (1882–1883)'),
+    ('A', 'Vous vous souvenez, ma Mère chérie, du ravissant petit livre', 'Ms A', 'A primeira comunhão e os escrúpulos (1884–1886)'),
+    ('A', 'Ce fut le 25 décembre 1886', 'Ms A', 'Terceira época: a graça do Natal (1886–1887)'),
+    ('A', 'Trois jours après le voyage de Bayeux', 'Ms A', 'A viagem a Roma (1887)'),
+    ('A', "O ma Mère chérie ! qu'il m'a été doux de vous revoir", 'Ms A', 'A espera e a entrada no Carmelo (1888–1890)'),
+    ('A', "Avant de vous parler de cette épreuve j'aurais dû", 'Ms A', 'A profissão e a oferenda ao Amor (1890–1895)'),
+    ('B', '', 'Ms B', 'Carta à Irmã Maria do Sagrado Coração'),
+    ('B', 'J.M.J.T.', 'Ms B', 'Minha vocação é o Amor'),
+    ('C', '', 'Ms C', 'A pequena via e a provação da fé'),
+    ('C', "Cette année, ma Mère chérie, le bon Dieu m'a fait comprendre", 'Ms C', 'O mandamento novo'),
+    ('C', 'Ma Mère chérie, je vous ai rappelé le premier travail', 'Ms C', 'As noviças e os irmãos missionários'),
+    ('C', "Depuis que j'ai deux frères et mes petites soeurs les novices", 'Ms C', '«Atraí-me, nós correremos»'),
 ]
 
 # Viradas entre os trechos de tradução em que a frase continua: o parágrafo é um só.
-JUNTAR = {'A 24r', 'A 66r'}
+JUNTAR = {'A 24r', 'A 66r', 'C 19r'}
 
 OBRAS = [
     {

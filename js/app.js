@@ -718,7 +718,8 @@
       var num = agrupa && i && o.partes[i - 1].n === p.n ? '' : p.n;
       html += '<li' + (pos === i + 1 ? ' class="atual"' : '') + '><a href="#/o/' + o.id + '/' + (i + 1) + '">' +
         '<span class="num">' + esc(num) + '</span>' +
-        '<span class="tit">' + (p.titulo ? inline(p.titulo) : '<span class="inc">' + incipit(p.texto, 60) + '</span>') + '</span>' +
+        '<span class="tit">' + (p.titulo ? inline(p.titulo) : '<span class="inc">' + incipit(p.texto, 60) + '</span>') +
+        (p.folhas ? '<span class="folhas">' + esc(p.folhas) + '</span>' : '') + '</span>' +
         '</a></li>';
     });
     html += '</ol></div>';

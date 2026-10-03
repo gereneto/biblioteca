@@ -84,18 +84,44 @@ def manuscritos():
     avisos = []
     pt = {ms: unidades_pt(trad[ms]) for ms in trad}
     fr = {ms: unidades_fr(open(os.path.join(ORIG, 'manuscritos', f'ms-{ms.lower()}.txt'), encoding='utf-8').read(), pt[ms]) for ms in trad}
+    for ms in trad:
+        if len(fr[ms]) != len(pt[ms]):
+            raise SystemExit(f'Ms {ms}: {len(pt[ms])} parágrafos na tradução e {len(fr[ms])} no francês; '
+                             'confira com conferir.py e acerte os parágrafos antes de publicar')
+    # começo de cada parte: o parágrafo francês que começa pelo texto dado (a tradução tem os
+    # mesmos parágrafos, na mesma ordem)
+    inicios, ultimo = [], {}
+    for ms, comeco, n, titulo in PARTES_MANUSCRITOS:
+        a_partir = ultimo.get(ms, -1) + 1
+        if not comeco:
+            i = 0
+        else:
+            i = next((j for j in range(a_partir, len(fr[ms])) if sem_marca(fr[ms][j]['texto']).startswith(comeco)), None)
+            if i is None:
+                raise SystemExit(f'Ms {ms}: começo de parte não encontrado: {comeco!r}')
+        ultimo[ms] = i
+        inicios.append((ms, i, n, titulo))
     partes = []
-    for k, (ms, folha, desvio, n, titulo) in enumerate(PARTES_MANUSCRITOS):
-        prox = PARTES_MANUSCRITOS[k + 1] if k + 1 < len(PARTES_MANUSCRITOS) and PARTES_MANUSCRITOS[k + 1][0] == ms else None
-        i0 = indice_inicio(pt[ms], folha, desvio)
-        i1 = indice_inicio(pt[ms], prox[1], prox[2]) if prox else len(pt[ms])
-        t = [u['texto'] for u in pt[ms][i0:i1]]
-        o = [u['texto'] for u in fr[ms][i0:i1]] if len(fr[ms]) == len(pt[ms]) else None
-        if o is None:
-            avisos.append(f'Ms {ms}: {len(pt[ms])} parágrafos na tradução, {len(fr[ms])} no francês — sem original ao lado')
-        partes.append({'n': n, 'titulo': titulo, 'texto': '\n\n'.join(t), 'original': '\n\n'.join(o) if o else None,
-                       'folhas': f"{folha_de(pt[ms][i0])}–{folha_fim(pt[ms], i1)}"})
+    for k, (ms, i0, n, titulo) in enumerate(inicios):
+        i1 = inicios[k + 1][1] if k + 1 < len(inicios) and inicios[k + 1][0] == ms else len(pt[ms])
+        partes.append({'n': n, 'titulo': titulo,
+                       'texto': '\n\n'.join(u['texto'] for u in pt[ms][i0:i1]),
+                       'original': '\n\n'.join(u['texto'] for u in fr[ms][i0:i1]),
+                       'folhas': f"{folha_de(pt[ms][i0]) if pt[ms][i0]['texto'].startswith('{Ms') else folha_ant(pt[ms], i0)}"
+                                 f"–{folha_fim(pt[ms], i1)}"})
     return partes, avisos
+
+
+def sem_marca(s):
+    return MARCA.sub('', s).strip()
+
+
+def folha_ant(unidades, i):
+    """Folha em que está o começo do parágrafo i (a última marca antes dele)."""
+    for u in reversed(unidades[:i]):
+        if u['folhas']:
+            return u['folhas'][-1].split(' ', 1)[1]
+    return ''
 
 
 def unidades_pt(corpo):

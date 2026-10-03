@@ -313,6 +313,9 @@ main { padding: 0 1rem 5rem; }
   vertical-align: .35em; padding: 0 .15em; white-space: nowrap; user-select: none; opacity: .8;
 }
 
+/* índice dos manuscritos: folhas de cada parte */
+.indice .folhas { font-family: var(--sans); font-size: .72rem; color: var(--tinta-tenue); margin-left: .6em; white-space: nowrap; }
+
 /* teatro: título de cena e nome de quem fala */
 .texto p.cena {
   text-indent: 0; text-align: center; font-family: var(--sans); font-size: .74rem;

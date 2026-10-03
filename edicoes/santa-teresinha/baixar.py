@@ -262,6 +262,13 @@ def completar_manuscritos():
                 out.append(x)
             bl[k] = (m, '\n\n'.join(out))
     open(arq_a, 'w', encoding='utf-8').write(cab.rstrip() + '\n\n' + '\n\n'.join(m + '\n\n' + t for m, t in bl) + '\n')
+    # legendas de imagem dos Arquivos («source : MsA04r_dessous-1.png») não são texto de Teresa
+    for ms in 'abc':
+        arq = os.path.join(SAIDA, 'manuscritos', f'ms-{ms}.txt')
+        t = open(arq, encoding='utf-8').read()
+        t = re.sub(r'(?m)^source\s*:\s*\S+\.(png|jpe?g)\s*$\n?', '', t, flags=re.I)
+        t = re.sub(r'(?m)^_?\(dates corrigées entre crochets\)_?\s*$\n?', '', t)   # nota dos editores
+        open(arq, 'w', encoding='utf-8').write(re.sub(r'\n{3,}', '\n\n', t))
     print('manuscritos completados (C 8r, C 26v; A 59v sem repetição)')
 
 
