@@ -1,0 +1,56 @@
+# molde português: decassílabo com a 4.ª obrigatória; cadência dominante heroica (4-6), com sáficos (4-8) isolados, cerca de 1 verso em 10.
+# Oitavas ABABCDCD como no original: grave nos ímpares, aguda nos pares; o v. 8 das estrofes 3 a 6 acaba sempre em «Leite Virginal».
+
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-8
+10: 4-6
+10: 4-8
+10: 4-6
+
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+
+10: 4-6
+10: 4-8
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+
+10: 4-8
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+
+10: 4-6
+10: 4-8
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6
+10: 4-6

@@ -1,0 +1,26 @@
+# Octossílabo francês, contado até a última tônica; o e mudo final vira +1. Sem cesura fixa: o apoio interno cai na 4.ª (metade dos versos), na 3.ª ou na 5.ª.
+# Quadras ABAB, rima feminina (+1) nos ímpares e masculina nos pares. Diérese em «pri-è-re» (v. 19).
+8: 1-4-8 +1
+8: 4-8
+8: 4-6-8 +1
+8: 2-4-8
+
+8: 2-5-8 +1
+8: 2-4-8
+8: 3-8 +1
+8: 3-8
+
+8: 2-5-8 +1
+8: 3-5-8
+8: 4-8 +1
+8: 3-6-8
+
+8: 2-4-8 +1
+8: 3-8
+8: 4-8 +1
+8: 4-8
+
+8: 2-5-8 +1
+8: 3-6-8
+8: 2-5-8 +1
+8: 2-(5)-8
